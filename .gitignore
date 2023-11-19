@@ -10,6 +10,8 @@ Assets/JMO Assets/*
 Assets/CasualGameSounds.meta
 Assets/JMO Assets.meta
 Assets/Ultimate Platformer Pack - Dec 2021 - Copy.meta
+Assets/ProBuilder Data/*
+Builds/*
 CFXR.WelcomeScreen.csproj
 CFXRDemo.csproj
 CFXREditor.csproj

@@ -452,14 +452,16 @@ MonoBehaviour:
   animator: {fileID: 4802852579929082459}
   freeLookVCam: {fileID: 0}
   input: {fileID: 11400000, guid: a38f5b2be96e86e4a93a49ad9e7b8be1, type: 2}
-  moveSpeed: 800
+  moveSpeed: 1200
   rotationSpeed: 15
   smoothTime: 0.2
-  jumpForce: 0.5
+  jumpForce: 24
   jumpDuration: 0.2
   jumpCooldown: 0
-  jumpMaxHeight: 20
-  gravityMultiplier: 9
+  gravityMultiplier: 1
+  dashDuration: 0.4
+  dashCooldown: 0.1
+  dashForce: 3
 --- !u!65 &3475411675838030182
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -512,7 +514,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 716998703385570247}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 8
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}

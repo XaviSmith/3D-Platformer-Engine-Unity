@@ -80,6 +80,13 @@ namespace Platformer
             {
                 isDashing = true;
                 dashVelocity = dashForce;
+
+                //Cancel jump so we can halt vertical momentum
+                if(jumpTimer.IsRunning)
+                {
+                    jumpTimer.Stop();
+                }
+
             };
             dashTimer.OnTimerStop += () =>
             {
@@ -102,7 +109,7 @@ namespace Platformer
             AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
             AddAnyTransition(dashState, new FuncPredicate(() => dashTimer.IsRunning));
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
-            AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning && jumpTimer.IsRunning));
+            AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
 
             //set initial state
             stateMachine.SetState(locomotionState);
@@ -202,29 +209,6 @@ namespace Platformer
                 return;
             }
 
-            
-            /* OLD METHOD
-            //if jumping, calculate upward velocity
-            if(jumpTimer.IsRunning)
-            {
-                
-                
-                float launchPoint = 0.9f; //Inverse. We jump with full force until this much time left 
-
-                if (jumpTimer.Progress > launchPoint) //we just started the jump
-                {
-                    jumpVelocity = Mathf.Sqrt(2 * jumpMaxHeight * Mathf.Abs(Physics.gravity.y)); //Calculate the velocity required to reach the jump max height using v = sqrt(2gh) where g is gravity, h is maxHeight
-                } else
-                {
-                    //gradually apply less velocity as the jump progresses
-                    jumpVelocity += (1 - jumpTimer.Progress) * jumpForce * Time.fixedDeltaTime;
-                }
-
-            } else //otherwise let gravity over
-            {
-                jumpVelocity += Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;
-            } */
-
             if(!jumpTimer.IsRunning)
             {
                 jumpVelocity += Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;
@@ -276,6 +260,15 @@ namespace Platformer
         {
             Vector3 velocity = adjustedDirection * moveSpeed * dashVelocity * Time.fixedDeltaTime;
             rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
+        }
+
+        public void HaltVerticalAirMomentum() //For airdashes since we don't want to rise or fall
+        {
+            if(!groundChecker.IsGrounded)
+            {
+                rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+            }
+            
         }
 
         //*************************************************************************************************

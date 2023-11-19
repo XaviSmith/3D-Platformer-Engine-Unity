@@ -75,6 +75,7 @@ namespace Utils
                 }
             }
 
+            //NOTE: Currently unused but may have to set IsFinished in stop.
             public bool IsFinished => Time <= 0; //bool Lambda function as a variable. Checks if time is <= 0
 
             public void Reset() => Time = initialTime; //Reset our cooldown;

@@ -18,5 +18,6 @@ public class DashState : BaseState
     {
         //call Player's move logic since dashing is just a speed modifier for now.
         player.HandleMovement();
+        player.HaltVerticalAirMomentum();
     }
 }

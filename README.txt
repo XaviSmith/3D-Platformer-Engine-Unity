@@ -1,5 +1,7 @@
+3D Platformer made in Unity using C# and probuilder
+
 Extends from tutorial series here https://www.youtube.com/watch?v=--_CH5DYz0M 
-Uses SOLID, , principles
+Uses SOLID, Strategy, principles
 
 Added animations to Chest, Player(?) and a few of my own sfx
 
@@ -8,6 +10,7 @@ Software Used: BFXR, Unity, Visual Studio
 PACKAGES REQUIRED: Cartoon Remaster VFX (free)
 	  DOTween (Free)
 	  Ultimate Platformer Pack - https://quaternius.itch.io/ultimate-platformer-pack
+	  Probuilder
 
 
 FLOW: 

@@ -52,6 +52,9 @@ namespace Platformer
         CountdownTimer dashCooldownTimer; //if we want a cooldown on how long after landing before we can jump again.
 
         StateMachine stateMachine;
+        //State Machine Helper methods, consider just moving this into the stateMachine class.
+        void AddTransition(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
+        void AddAnyTransition(IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
 
         //Animator params
         static readonly int Speed = Animator.StringToHash("Speed"); //Speed for our animation blendTree so we know when to transition from idle walk and run
@@ -115,9 +118,6 @@ namespace Platformer
             stateMachine.SetState(locomotionState);
 
         }
-
-        void AddTransition(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
-        void AddAnyTransition(IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
 
         //*****************************Jumping (also see HandleJump lower down)*****************************
 

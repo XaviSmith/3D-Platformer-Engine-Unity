@@ -12,7 +12,7 @@ public class StateMachine
     //Updates our state. Not to be confused with Unity Update. Called by a Monobehaviour's Update function (see PlayerController for an example)
     public void Update()
     {
-        var transition = GetTransition();
+        ITransition transition = GetTransition();
         if(transition != null)
         {
             ChangeState(transition.ToState);

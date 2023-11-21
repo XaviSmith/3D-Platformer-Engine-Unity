@@ -1,9 +1,6 @@
-3D Platformer made in Unity using C# and probuilder
+3D Platformer made in Unity using C# and ProBuilder and implementing SOLID principles and the Strategy pattern.
 
 Extends from tutorial series here https://www.youtube.com/watch?v=--_CH5DYz0M 
-Uses SOLID, Strategy, principles
-
-Added animations to Chest, Player(?) and a few of my own sfx
 
 Software Used: BFXR, Unity, Visual Studio
 

@@ -6,16 +6,16 @@ namespace Platformer
 {
     public class Collectible : Entity
     {
-        // Start is called before the first frame update
-        void Start()
+        [SerializeField] int score = 10; //FIXME set using Factory
+        [SerializeField] IntEventChannel scoreChannel;
+
+        void OnTriggerEnter(Collider other)
         {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
+            if(other.CompareTag("Player"))
+            {
+                scoreChannel.Invoke(score);
+                Destroy(gameObject);
+            }
         }
     }
 }

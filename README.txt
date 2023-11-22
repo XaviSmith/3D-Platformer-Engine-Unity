@@ -1,13 +1,14 @@
-3D Platformer made in Unity using C# and ProBuilder and implementing SOLID principles and the Strategy pattern.
+3D Platformer made in Unity using C# and ProBuilder and implementing SOLID principles.
 
 Extends from tutorial series here https://www.youtube.com/watch?v=--_CH5DYz0M 
 
 Software Used: BFXR, Unity, Visual Studio
 
-PACKAGES REQUIRED: Cartoon Remaster VFX (free)
-	  DOTween (Free)
+PACKAGES REQUIRED (All packages are free): Cartoon Remaster VFX (Free ver)
+	  DOTween (Free ver)
 	  Ultimate Platformer Pack - https://quaternius.itch.io/ultimate-platformer-pack
 	  Probuilder
+	  Text Mesh Pro
 
 
 FLOW: 

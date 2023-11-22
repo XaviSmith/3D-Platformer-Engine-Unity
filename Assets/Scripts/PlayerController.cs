@@ -34,6 +34,11 @@ namespace Platformer
         [SerializeField] float dashForce = 10f;
         bool isDashing = false;
 
+        [Header("Attack Settings")]
+        [SerializeField] float attackCooldown = 0.5f;
+        [SerializeField] float attackDistance = 3f;
+        [SerializeField] int attackDamage = 10;
+
         Transform mainCam; //Cache main camera since we reference it a lot
 
         float currSpeed;
@@ -50,6 +55,8 @@ namespace Platformer
 
         CountdownTimer dashTimer;
         CountdownTimer dashCooldownTimer; //if we want a cooldown on how long after landing before we can jump again.
+
+        CountdownTimer attackTimer;
 
         StateMachine stateMachine;
         //State Machine Helper methods, consider just moving this into the stateMachine class.
@@ -70,11 +77,43 @@ namespace Platformer
 
             rb.freezeRotation = true;
 
+            SetupTimers();
+            SetupStateMachine();
+
+        }
+
+        private void SetupStateMachine()
+        {
+            stateMachine = new StateMachine();
+
+            //Declare States
+            LocomotionState locomotionState = new LocomotionState(this, animator);
+            JumpState jumpState = new JumpState(this, animator);
+            DashState dashState = new DashState(this, animator);
+            AttackState attackState = new AttackState(this, animator);
+
+            //Define transitions
+            AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
+            AddTransition(locomotionState, attackState, new FuncPredicate(() => attackTimer.IsRunning));
+            AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));       
+            AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
+            AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
+            AddTransition(attackState, locomotionState, new FuncPredicate(() => !attackTimer.IsRunning));
+
+            AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !attackTimer.IsRunning && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddAnyTransition(dashState, new FuncPredicate(() => dashTimer.IsRunning));
+
+            //set initial state
+            stateMachine.SetState(locomotionState);
+        }
+
+        void SetupTimers()
+        {
             //Setup timers
             jumpTimer = new CountdownTimer(jumpDuration);
             jumpCooldownTimer = new CountdownTimer(jumpCooldown);
             dashTimer = new CountdownTimer(dashDuration);
-            dashCooldownTimer = new CountdownTimer(dashCooldown);          
+            dashCooldownTimer = new CountdownTimer(dashCooldown);
 
             jumpTimer.OnTimerStart += () => jumpVelocity = jumpForce; //whenever timer starts we start out with jumpForce
             jumpTimer.OnTimerStop += () => jumpCooldownTimer.Start(); //For if we want a cooldown on how long after landing we want to be able to jump again.
@@ -85,7 +124,7 @@ namespace Platformer
                 dashVelocity = dashForce;
 
                 //Cancel jump so we can halt vertical momentum
-                if(jumpTimer.IsRunning)
+                if (jumpTimer.IsRunning)
                 {
                     jumpTimer.Stop();
                 }
@@ -98,39 +137,26 @@ namespace Platformer
                 dashCooldownTimer.Start();
             };
 
-            timers = new List<Timer>(4) { jumpTimer, jumpCooldownTimer, dashTimer, dashCooldownTimer }; //defining capacity for some optimization;
-            //********State Machine*******
-            stateMachine = new StateMachine();
 
-            //Declare States
-            LocomotionState locomotionState = new LocomotionState(this, animator);
-            JumpState jumpState = new JumpState(this, animator);
-            DashState dashState = new DashState(this, animator);
+            attackTimer = new CountdownTimer(attackCooldown);
 
-            //Define transitions
-            AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
-            AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
-            AddAnyTransition(dashState, new FuncPredicate(() => dashTimer.IsRunning));
-            AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
-            AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
 
-            //set initial state
-            stateMachine.SetState(locomotionState);
-
+            timers = new List<Timer>(5) { jumpTimer, jumpCooldownTimer, dashTimer, dashCooldownTimer, attackTimer }; //defining capacity for some optimization;
         }
-
         //*****************************Jumping (also see HandleJump lower down)*****************************
 
         void OnEnable()
         {
             input.Jump += OnJump;
             input.Dash += OnDash;
+            input.Attack += OnAttack;
         }
 
         private void OnDisable()
         {
             input.Jump -= OnJump;
             input.Dash -= OnDash;
+            input.Attack -= OnAttack;
         }
 
         void OnJump(bool performed)
@@ -160,6 +186,28 @@ namespace Platformer
             
         }
 
+        void OnAttack()
+        {
+            if(!attackTimer.IsRunning)
+            {
+                attackTimer.Start();
+            }
+        }
+
+        public void Attack()
+        {
+            Vector3 attackPos = transform.position + transform.forward;
+            Collider[] hitEnemies = Physics.OverlapSphere(attackPos, attackDistance);
+
+            foreach(Collider enemy in hitEnemies)
+            {
+                Debug.Log(enemy.name);
+                if(enemy.CompareTag("Enemy"))
+                {
+                    enemy.GetComponent<Health>().TakeDamage(attackDamage);
+                }
+            }
+        }
 
         //**********************************************************************
 

@@ -15,14 +15,21 @@ public class PlayerDetector : MonoBehaviour
     [SerializeField] float attackRange = 2f;
 
     public Transform Player { get; private set; }
+    public Health PlayerHealth { get; private set; }
+
     CountdownTimer detectionTimer;
 
     IDetectionStrategy detectionStrategy;
 
+    void Awake()
+    {
+        Player = GameObject.FindGameObjectWithTag("Player").transform; //TODO: Get player more neatly from PlayerController
+        PlayerHealth = Player.GetComponent<Health>();
+    }
+
     void Start()
     {
-        detectionTimer = new CountdownTimer(detectionCooldown);
-        Player = GameObject.FindGameObjectWithTag("Player").transform; //TODO: Get player more neatly from PlayerController
+        detectionTimer = new CountdownTimer(detectionCooldown); //No need for an OnStop or Reset as this gets reset in detectionStrategy.Execute() whenever we call Timer.Start()
         detectionStrategy = new ConeDetectionStrategy(detectionAngle, detectionRadius, innerDetectionRadius);
     }
 

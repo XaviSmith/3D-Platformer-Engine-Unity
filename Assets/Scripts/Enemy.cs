@@ -21,7 +21,7 @@ namespace Platformer
         void AddTransition(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
         void AddAnyTransition(IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
 
-        CountdownTimer attackCooldownTimer; //how long should an attack take
+        CountdownTimer attackTimer; //how long should an attack take
 
         private void OnEnable()
         {
@@ -39,7 +39,7 @@ namespace Platformer
         // Start is called before the first frame update
         void Start()
         {
-            attackCooldownTimer = new CountdownTimer(timeBetweenAttacks);
+            attackTimer = new CountdownTimer(timeBetweenAttacks);
 
             //************State machine************
             stateMachine = new StateMachine();
@@ -61,7 +61,7 @@ namespace Platformer
         void Update()
         {
             stateMachine.Update();
-            attackCooldownTimer.Tick(Time.deltaTime);
+            attackTimer.Tick(Time.deltaTime);
         }
 
         public void FixedUpdate()
@@ -71,13 +71,13 @@ namespace Platformer
 
         public void Attack()
         {
-            if(attackCooldownTimer.IsRunning)
+            if(attackTimer.IsRunning)
             {
                 return;
             }
 
-            attackCooldownTimer.Start();
-
+            attackTimer.Start();
+            playerDetector.PlayerHealth.TakeDamage(10);
             Debug.Log("Enemy.Attack");
         }
     }

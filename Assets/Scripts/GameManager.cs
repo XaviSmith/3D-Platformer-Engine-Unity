@@ -20,8 +20,14 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        //EventManager<int>.StartListening(Events.UPDATESCORE.ToString(), AddScore);
+    }
+
     public void AddScore(int score)
     {
+        Debug.Log("Adding " + score + " to score.");
         Score += score;
     }
 }

@@ -8,18 +8,20 @@ public class ScoreUI : MonoBehaviour
 
     void Start()
     {
-        UpdateScore();
+        UpdateScoreText();
     }
 
-    public void UpdateScore()
+    public void UpdateScoreText()
     {
         //Done in a coroutine to give all logic time to run before updating the score
-        StartCoroutine(UpdateScoreCoroutine());
+        StartCoroutine(UpdateScoreCoroutineText());
     }
 
-    IEnumerator UpdateScoreCoroutine()
+
+    IEnumerator UpdateScoreCoroutineText()
     {
         yield return null;
+        Debug.Log("UPDATING SCORE TO " + GameManager.Instance.Score.ToString());
         scoreText.text = GameManager.Instance.Score.ToString();
     }
 }

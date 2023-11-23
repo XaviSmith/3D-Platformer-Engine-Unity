@@ -16,15 +16,38 @@ public class Health : MonoBehaviour
         currentHealth = maxHealth;
     }
 
+    void OnEnable()
+    {
+        EventManager.StartListening(Events.TEST.ToString(), Test);
+        EventManager<int>.StartListening(Events.DAMAGE.ToString(), TakeDamage);
+    }
+
+    void OnDisable()
+    {
+        EventManager.StopListening(Events.TEST.ToString(), Test);
+        EventManager<int>.StopListening(Events.DAMAGE.ToString(), TakeDamage);
+    }
+
+    public void Test()
+    {
+        Debug.Log("TEST CALLED");
+    }
+
     void Start()
     {
-        PublishHealthPercentage();
+        UpdateHealth();
     }
+
+    /*public void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+        PublishHealthPercentage();
+    }*/
 
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
-        PublishHealthPercentage();
+        UpdateHealth();
     }
 
     void PublishHealthPercentage()
@@ -33,5 +56,13 @@ public class Health : MonoBehaviour
         {
             playerHealthChannel.Invoke(currentHealth / (float) maxHealth);
         }
+    }
+
+    void UpdateHealth()
+    {
+        if(gameObject.tag == "Player")
+        {
+            EventManager<float>.TriggerEvent(Events.UPDATEPLAYERHEALTH.ToString(), currentHealth / (float)maxHealth);
+        }     
     }
 }

@@ -90,18 +90,21 @@ namespace Platformer
             LocomotionState locomotionState = new LocomotionState(this, animator);
             JumpState jumpState = new JumpState(this, animator);
             DashState dashState = new DashState(this, animator);
+            DashJumpState dashJumpState = new DashJumpState(this, animator);
             AttackState attackState = new AttackState(this, animator);
 
             //Define transitions
             AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
             AddTransition(locomotionState, attackState, new FuncPredicate(() => attackTimer.IsRunning));
+            AddTransition(locomotionState, dashState, new FuncPredicate(() => groundChecker.IsGrounded && dashTimer.IsRunning));
             AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));       
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
+            AddTransition(dashState, dashJumpState, new FuncPredicate(() => jumpTimer.IsRunning && dashTimer.IsRunning));
             AddTransition(attackState, locomotionState, new FuncPredicate(() => !attackTimer.IsRunning));
 
             AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !attackTimer.IsRunning && !jumpTimer.IsRunning && !dashTimer.IsRunning));
-            AddAnyTransition(dashState, new FuncPredicate(() => dashTimer.IsRunning));
+            //AddAnyTransition(dashState, new FuncPredicate(() => dashTimer.IsRunning));
 
             //set initial state
             stateMachine.SetState(locomotionState);
@@ -161,8 +164,10 @@ namespace Platformer
 
         void OnJump(bool performed)
         {
+            Debug.Log("ONJUMP!");
             if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && groundChecker.IsGrounded)
             {
+                Debug.Log("START TIMER");
                 jumpTimer.Start();
             } else if(!performed && jumpTimer.IsRunning)
             {
@@ -247,7 +252,6 @@ namespace Platformer
         }
 
         //Jump has an initial burst of vertical speed, then apply less velocity over time, then let gravity take over.
-        //Also called by JumpState
         public void HandleJump()
         {
             // If we're on the ground and not jumping, keep jump velocity at 0
@@ -267,9 +271,30 @@ namespace Platformer
 
         }
 
+        public void HandleDashJump()
+        {
+            // If we're on the ground and not jumping, keep jump velocity at 0
+            if (!jumpTimer.IsRunning && groundChecker.IsGrounded)
+            {
+                jumpVelocity = 0f;
+                return;
+            }
+
+            if (!jumpTimer.IsRunning)
+            {
+                jumpVelocity += Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;
+            }
+
+            //Apply the jump velocity
+            rb.velocity = new Vector3(rb.velocity.x, jumpVelocity, rb.velocity.z);
+            dashVelocity = dashForce;
+
+        }
+
+
         //*************************Movement*************************************
 
-        //Also called by LocomotionState and JumpState
+        //Called by LocomotionState and JumpState
         public void HandleMovement()
         {
             //Have movement direction be relative to our camera's rotation around the y axis (vector3.up)
@@ -294,6 +319,11 @@ namespace Platformer
         void SmoothSpeed(float targetSpeed)
         {
             currSpeed = Mathf.SmoothDamp(currSpeed, targetSpeed, ref velocity, smoothTime);
+        }
+
+        public void ResetDashVelocity()
+        {
+            dashVelocity = 1f;
         }
 
         void HandleRotation(Vector3 adjustedDirection)

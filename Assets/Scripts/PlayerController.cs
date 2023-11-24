@@ -299,10 +299,13 @@ namespace Platformer
         {
             //Have movement direction be relative to our camera's rotation around the y axis (vector3.up)
             Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
+            adjustedDirection = Vector3.ProjectOnPlane(adjustedDirection, groundChecker.CurrSlopeNormal);
+
+            HandleRotation(adjustedDirection);
+            //transform.rotation = Quaternion.LookRotation(Vector3.Cross(transform.right, groundChecker.currSlopeNormal));
 
             if (adjustedDirection.magnitude > 0)
-            {
-                HandleRotation(adjustedDirection);
+            {   
                 HandleHorizontalMovement(adjustedDirection);
                 SmoothSpeed(adjustedDirection.magnitude);
 
@@ -327,7 +330,7 @@ namespace Platformer
         }
 
         void HandleRotation(Vector3 adjustedDirection)
-        {
+        {        
             Quaternion targetRotation = Quaternion.LookRotation(adjustedDirection);
             //transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             transform.LookAt(transform.position + adjustedDirection); //Have player look where they're going

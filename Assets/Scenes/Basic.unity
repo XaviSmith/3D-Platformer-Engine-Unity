@@ -9529,6 +9529,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 954894963747054616, guid: 28c6280c7d428754facbad0aa61bec65, type: 3}
+      propertyPath: attackRange
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 954894963747054616, guid: 28c6280c7d428754facbad0aa61bec65, type: 3}
+      propertyPath: detectionRadius
+      value: 15
+      objectReference: {fileID: 0}
     - target: {fileID: 5744445452305297881, guid: 28c6280c7d428754facbad0aa61bec65, type: 3}
       propertyPath: m_Name
       value: Enemy
@@ -9857,6 +9865,18 @@ PrefabInstance:
     - target: {fileID: 3851497037035983236, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 39.354805
+      objectReference: {fileID: 0}
+    - target: {fileID: 4655236499012759444, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: offset.y
+      value: -0.47
+      objectReference: {fileID: 0}
+    - target: {fileID: 4655236499012759444, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: groundDistance
+      value: 0.16
+      objectReference: {fileID: 0}
+    - target: {fileID: 4655236499012759444, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: detectionRadius
+      value: 0.32
       objectReference: {fileID: 0}
     - target: {fileID: 5044550090603263865, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y

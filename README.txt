@@ -1,4 +1,4 @@
-3D Platformer made in Unity using C# and ProBuilder and implementing SOLID principles.
+3D Platformer made in Unity following SOLID principles and using C#, Probuilder and State Machines.
 
 Extends from tutorial series here https://www.youtube.com/watch?v=--_CH5DYz0M 
 

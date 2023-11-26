@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using Platformer;
 
-public class JumpState : BaseState
+public class AttackState : BaseState
 {
-    public JumpState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
+    public AttackState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
 
-    //On Enter start the jump animation
     public override void OnEnter()
     {
-        Debug.Log("JumpState.OnEnter");
-        animator.CrossFade(JumpHash, CROSSFADEDURATION);
+        base.OnEnter();
+        animator.CrossFade(AttackHash, CROSSFADEDURATION);
+        player.Attack();
     }
 
     public override void FixedUpdate()

@@ -9,9 +9,8 @@ public class LocomotionState : BaseState
 
     public override void OnEnter()
     {
-        //play jump anim
+        base.OnEnter();
         animator.CrossFade(LocomotionHash, CROSSFADEDURATION);
-        Debug.Log("LocomotionState.OnEnter");
     }
 
     public override void FixedUpdate()

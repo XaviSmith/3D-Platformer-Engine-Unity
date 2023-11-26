@@ -6,7 +6,7 @@ namespace Platformer
 {
     /// <summary>
     /// Goes on the player.
-    /// Makes moving platforms parent of the player so we move along with them
+    /// Makes moving platforms parent of the player so we move along with them.
     /// </summary>
     public class PlatformCollisionHandler : MonoBehaviour
     {

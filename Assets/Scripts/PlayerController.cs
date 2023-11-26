@@ -27,12 +27,18 @@ namespace Platformer
         [SerializeField] float jumpCooldown = 0f;
         //[SerializeField] float jumpMaxHeight = 2f;
         [SerializeField] float gravityMultiplier = 1f; //for if we want to bring them to the ground faster or slower. NOTE: It's generally better to change the overall gravity for tweaks since this won't affect speed falling off a platform
+        bool isFalling = false;
 
         [Header("Dash Settings")] //To dash we basically just multiply horizontal movespeed * dashVelocity
         [SerializeField] float dashDuration = 0.5f;
         [SerializeField] float dashCooldown = 0.2f;
         [SerializeField] float dashForce = 10f;
         bool isDashing = false;
+
+        [Header("AirDash Settings")] //To dash we basically just multiply horizontal movespeed * dashVelocity
+        [SerializeField] float airDashDuration = 0.25f;
+        [SerializeField] float airDashForce = 10f;
+        bool isAirDashing = false;
 
         [Header("Attack Settings")]
         [SerializeField] float attackCooldown = 0.5f;
@@ -54,7 +60,10 @@ namespace Platformer
         CountdownTimer jumpCooldownTimer; //if we want a cooldown on how long after landing before we can jump again.
 
         CountdownTimer dashTimer;
-        CountdownTimer dashCooldownTimer; //if we want a cooldown on how long after landing before we can jump again.
+        CountdownTimer dashCooldownTimer;
+
+        CountdownTimer airDashTimer;
+        CountdownTimer airDashCooldownTimer;
 
         CountdownTimer attackTimer;
 
@@ -89,6 +98,7 @@ namespace Platformer
             //Declare States
             LocomotionState locomotionState = new LocomotionState(this, animator);
             JumpState jumpState = new JumpState(this, animator);
+            FallState fallState = new FallState(this, animator);
             DashState dashState = new DashState(this, animator);
             DashJumpState dashJumpState = new DashJumpState(this, animator);
             AttackState attackState = new AttackState(this, animator);
@@ -104,6 +114,7 @@ namespace Platformer
             AddTransition(attackState, locomotionState, new FuncPredicate(() => !attackTimer.IsRunning));
 
             AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !attackTimer.IsRunning && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddAnyTransition(fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             //AddAnyTransition(dashState, new FuncPredicate(() => dashTimer.IsRunning));
 
             //set initial state
@@ -164,10 +175,8 @@ namespace Platformer
 
         void OnJump(bool performed)
         {
-            Debug.Log("ONJUMP!");
             if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && groundChecker.IsGrounded)
             {
-                Debug.Log("START TIMER");
                 jumpTimer.Start();
             } else if(!performed && jumpTimer.IsRunning)
             {
@@ -206,7 +215,7 @@ namespace Platformer
 
             foreach(Collider enemy in hitEnemies)
             {
-                Debug.Log(enemy.name);
+                //Debug.Log(enemy.name);
                 if(enemy.CompareTag("Enemy"))
                 {
                     enemy.GetComponent<Health>().TakeDamage(attackDamage);

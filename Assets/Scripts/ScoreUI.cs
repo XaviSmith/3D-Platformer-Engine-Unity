@@ -21,7 +21,6 @@ public class ScoreUI : MonoBehaviour
     IEnumerator UpdateScoreCoroutineText()
     {
         yield return null;
-        Debug.Log("UPDATING SCORE TO " + GameManager.Instance.Score.ToString());
         scoreText.text = GameManager.Instance.Score.ToString();
     }
 }

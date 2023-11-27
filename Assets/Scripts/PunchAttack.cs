@@ -1,12 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Utils;
 
-namespace Platformer
+public class PunchAttack : BaseAttack
 {
-    public abstract class Entity : MonoBehaviour
-    {
-
-    }
 }
-

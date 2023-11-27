@@ -15,6 +15,7 @@ namespace Platformer
         [SerializeField] Animator animator;
         [SerializeField] CinemachineFreeLook freeLookVCam;
         [SerializeField] InputReader input;
+        [SerializeField] BaseAttack baseAttack;
 
         [Header("Movement Settings")]
         [SerializeField] float moveSpeed = 6f;
@@ -40,11 +41,6 @@ namespace Platformer
         [SerializeField] float airDashForce = 10f;
         bool isAirDashing = false;
 
-        [Header("Attack Settings")]
-        [SerializeField] float attackCooldown = 0.5f;
-        [SerializeField] float attackDistance = 3f;
-        [SerializeField] int attackDamage = 10;
-
         Transform mainCam; //Cache main camera since we reference it a lot
 
         float currSpeed;
@@ -64,8 +60,6 @@ namespace Platformer
 
         CountdownTimer airDashTimer;
         CountdownTimer airDashCooldownTimer;
-
-        CountdownTimer attackTimer;
 
         StateMachine stateMachine;
         //State Machine Helper methods, consider just moving this into the stateMachine class.
@@ -105,15 +99,15 @@ namespace Platformer
 
             //Define transitions
             AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
-            AddTransition(locomotionState, attackState, new FuncPredicate(() => attackTimer.IsRunning));
+            AddTransition(locomotionState, attackState, new FuncPredicate(() => baseAttack.IsRunning));
             AddTransition(locomotionState, dashState, new FuncPredicate(() => groundChecker.IsGrounded && dashTimer.IsRunning));
             AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));       
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, dashJumpState, new FuncPredicate(() => jumpTimer.IsRunning && dashTimer.IsRunning));
-            AddTransition(attackState, locomotionState, new FuncPredicate(() => !attackTimer.IsRunning));
+            AddTransition(attackState, locomotionState, new FuncPredicate(() => !baseAttack.IsRunning));
 
-            AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !attackTimer.IsRunning && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             AddAnyTransition(fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             //AddAnyTransition(dashState, new FuncPredicate(() => dashTimer.IsRunning));
 
@@ -152,10 +146,7 @@ namespace Platformer
             };
 
 
-            attackTimer = new CountdownTimer(attackCooldown);
-
-
-            timers = new List<Timer>(5) { jumpTimer, jumpCooldownTimer, dashTimer, dashCooldownTimer, attackTimer }; //defining capacity for some optimization;
+            timers = new List<Timer>(4) { jumpTimer, jumpCooldownTimer, dashTimer, dashCooldownTimer}; //defining capacity for some optimization;
         }
         //*****************************Jumping (also see HandleJump lower down)*****************************
 
@@ -178,7 +169,7 @@ namespace Platformer
             if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && groundChecker.IsGrounded)
             {
                 jumpTimer.Start();
-            } else if(!performed && jumpTimer.IsRunning)
+            } else if(!performed && jumpTimer.IsRunning) //We let go of the jump button early, shorthop
             {
                 jumpTimer.Stop();
             }
@@ -188,39 +179,32 @@ namespace Platformer
         {
             if(!isDashing)
             {
-                if (performed && !dashTimer.IsRunning && !dashCooldownTimer.IsRunning)
+                if (performed && !dashTimer.IsRunning && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
                 {
                     dashTimer.Start();
-                }
-                else if (!performed && dashTimer.IsRunning)
-                {
-                    dashTimer.Stop();
-                }
+                } 
             }
             
         }
 
         void OnAttack()
         {
-            if(!attackTimer.IsRunning)
+            //ground Attack
+            if(groundChecker.IsGrounded)
             {
-                attackTimer.Start();
+                baseAttack.StartAttack(); //Start the timer if we're not in cooldown and set the bool to transition our state.
+            }     
+            
+            //air Attack
+            if(!groundChecker.IsGrounded)
+            {
+
             }
         }
 
         public void Attack()
         {
-            Vector3 attackPos = transform.position + transform.forward;
-            Collider[] hitEnemies = Physics.OverlapSphere(attackPos, attackDistance);
-
-            foreach(Collider enemy in hitEnemies)
-            {
-                //Debug.Log(enemy.name);
-                if(enemy.CompareTag("Enemy"))
-                {
-                    enemy.GetComponent<Health>().TakeDamage(attackDamage);
-                }
-            }
+            baseAttack.Attack(); //Called when we enter the Attack State to actually attack.
         }
 
         //**********************************************************************

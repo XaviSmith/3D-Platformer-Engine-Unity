@@ -479,6 +479,9 @@ PrefabInstance:
       addedObject: {fileID: 8496184050805263032}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5c7aa23e9af8a02448a66ee6d31858ff, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 3977093002029589595}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5c7aa23e9af8a02448a66ee6d31858ff, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 4576696635095174433}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5c7aa23e9af8a02448a66ee6d31858ff, type: 3}
       insertIndex: -1
@@ -523,6 +526,7 @@ MonoBehaviour:
   animator: {fileID: 4802852579929082459}
   freeLookVCam: {fileID: 0}
   input: {fileID: 11400000, guid: a38f5b2be96e86e4a93a49ad9e7b8be1, type: 2}
+  baseAttack: {fileID: 3977093002029589595}
   moveSpeed: 1200
   rotationSpeed: 15
   smoothTime: 0.2
@@ -535,9 +539,23 @@ MonoBehaviour:
   dashForce: 3
   airDashDuration: 0.25
   airDashForce: 10
-  attackCooldown: 0.5
+  attackDuration: 0.5
+--- !u!114 &3977093002029589595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 716998703385570247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: debe4f50ab167be4ca8889b9e11b55c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
   attackDistance: 3
   attackDamage: 10
+  cooldownTime: 0.5
+  targetTag: Enemy
 --- !u!114 &4576696635095174433
 MonoBehaviour:
   m_ObjectHideFlags: 0

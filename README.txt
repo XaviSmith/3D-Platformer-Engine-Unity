@@ -2,7 +2,7 @@
 
 Features
 -Highly customizable with everything from jump height to attack hitboxes editable in inspector
--Full movement system including slope movement, jumping, longjumping, dashing, wall jumping (TODO) and more
+-Full movement system including slope movement, jumping, longjumping, dashing, wall jumping (TODO), jump buffers, coyote time and more
 -Easy to use custom Event System that supports enums and passing parameters to all subscribers 
 -Gizmos for visualizing Spherecasts, OverlapSpheres etc
 -Optimized to run smoothly in browser

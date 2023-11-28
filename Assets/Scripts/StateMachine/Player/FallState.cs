@@ -16,7 +16,7 @@ public class FallState : BaseState
 
     public override void FixedUpdate()
     {
-        //call Player's jump logic and move logic
+        base.OnExit();
         player.HandleMovement();
     }
 

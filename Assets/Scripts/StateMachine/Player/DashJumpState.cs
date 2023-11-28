@@ -10,12 +10,13 @@ public class DashJumpState : BaseState
     //On Enter start the jump animation
     public override void OnEnter()
     {
-        Debug.Log("DashJumpState.OnEnter");
+        base.OnEnter();
         animator.CrossFade(JumpHash, CROSSFADEDURATION);
     }
 
     public override void OnExit()
     {
+        base.OnExit();
         player.ResetDashVelocity();
     }
 

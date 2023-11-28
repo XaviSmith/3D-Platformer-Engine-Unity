@@ -104,14 +104,15 @@ namespace Platformer
             AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
             AddTransition(locomotionState, attackState, new FuncPredicate(() => baseAttack.IsRunning));
             AddTransition(locomotionState, dashState, new FuncPredicate(() => groundChecker.IsGrounded && dashTimer.IsRunning));
-            AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));       
+            AddTransition(locomotionState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
+            AddTransition(jumpState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, dashJumpState, new FuncPredicate(() => jumpTimer.IsRunning && dashTimer.IsRunning));
             AddTransition(attackState, locomotionState, new FuncPredicate(() => !baseAttack.IsRunning));
 
             AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !dashTimer.IsRunning));
-            AddAnyTransition(fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             //AddAnyTransition(dashState, new FuncPredicate(() => dashTimer.IsRunning));
 
             //set initial state
@@ -182,7 +183,7 @@ namespace Platformer
         {
             if(!isDashing)
             {
-                if (performed && !dashTimer.IsRunning && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
+                if (performed && groundChecker.IsGrounded && !dashTimer.IsRunning && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
                 {
                     dashTimer.Start();
                     slideAttack.StartAttack();

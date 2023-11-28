@@ -10,13 +10,14 @@ public class DashState : BaseState
     //On Enter start the jump animation
     public override void OnEnter()
     {
-        Debug.Log("DashState.OnEnter");
+        base.OnEnter();
         animator.CrossFade(DashHash, CROSSFADEDURATION);
         player.SlideAttack();
     }
 
     public override void FixedUpdate()
     {
+        base.OnExit();
         //call Player's move logic since dashing is just a speed modifier for now.
         player.HandleMovement();
         player.HaltVerticalAirMomentum();

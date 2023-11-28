@@ -4,8 +4,9 @@ using UnityEngine;
 using Utils;
 
 //Not a scriptable obj so we can use Awake/Update functions to keep track of our own timers.
-public abstract class BaseAttack : MonoBehaviour, IAttack
+public abstract class BaseAttack : MonoBehaviour, IAttack, IHitboxListener
 {
+    [SerializeField] Hitbox hitbox;
     [SerializeField] float attackDistance;
     [SerializeField] int attackDamage;
     [SerializeField] protected float cooldownTime;
@@ -17,18 +18,30 @@ public abstract class BaseAttack : MonoBehaviour, IAttack
 
     protected void Awake()
     {
-        attackTimer = new CountdownTimer(cooldownTime);    
+        SetupAttackTimer();
+    }
+
+    protected void SetupAttackTimer()
+    {
+        attackTimer = new CountdownTimer(cooldownTime);
+
+        attackTimer.OnTimerStart += () => { hitbox.ActivateHitbox(); };
+        attackTimer.OnTimerStop += () => { hitbox.DeactivateHitbox(); };
     }
 
     protected virtual void Update()
     {
         attackTimer.Tick(Time.deltaTime);
+        if(attackTimer.IsRunning)
+        {
+            hitbox.UpdateHitbox();
+        }
     }
 
     public virtual void StartAttack()
     {
         if (!attackTimer.IsRunning)
-        {
+        {         
             attackTimer.Start();
         }  
     }
@@ -36,7 +49,9 @@ public abstract class BaseAttack : MonoBehaviour, IAttack
     // Start is called before the first frame update
     public virtual void Attack()
     {
-        Vector3 origin = transform.position + transform.forward;
+        hitbox.AddResponder(this);
+
+        /*Vector3 origin = transform.position + transform.forward;
         Collider[] hitEnemies = Physics.OverlapSphere(origin, attackDistance);
 
         foreach (Collider enemy in hitEnemies)
@@ -46,7 +61,19 @@ public abstract class BaseAttack : MonoBehaviour, IAttack
             {
                 enemy.GetComponent<Health>().TakeDamage(attackDamage);
             }
-        }
+        }*/
     }
 
+    public void CollidingWith(Collider collider)
+    {
+        Debug.Log(collider.name);
+        if (collider.CompareTag(targetTag))
+        {
+            Debug.Log("TAKE DAMAGE DAMMIT");
+            collider.GetComponent<Health>()?.TakeDamage(attackDamage);
+        }
+
+        Hurtbox hurtbox = collider.GetComponent<Hurtbox>();
+        hurtbox?.GetHit(attackDamage);
+    }
 }

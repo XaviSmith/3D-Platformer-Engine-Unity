@@ -13,3 +13,6 @@ public class Enums { }
         UPDATESCORE
     }
 
+[System.Serializable]
+public enum ColliderState { INACTIVE, ACTIVE, COLLIDING }
+

@@ -7,7 +7,7 @@ public class Health : MonoBehaviour
     [SerializeField] int maxHealth = 100;
     [SerializeField] FloatEventChannel playerHealthChannel;
 
-    int currentHealth;
+    [SerializeField]int currentHealth; //viewable for debugging
 
     public bool IsDead => currentHealth <= 0;
 

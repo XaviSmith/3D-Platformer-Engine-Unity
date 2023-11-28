@@ -17,8 +17,8 @@ TagManager:
   - Ground
   - WallColider
   - MovingPlat
-  - 
-  - 
+  - Hitbox
+  - Hurtbox
   - 
   - 
   - 

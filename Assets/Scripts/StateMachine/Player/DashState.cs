@@ -12,6 +12,7 @@ public class DashState : BaseState
     {
         Debug.Log("DashState.OnEnter");
         animator.CrossFade(DashHash, CROSSFADEDURATION);
+        player.SlideAttack();
     }
 
     public override void FixedUpdate()

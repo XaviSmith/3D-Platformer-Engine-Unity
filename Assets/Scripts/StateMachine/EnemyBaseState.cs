@@ -25,7 +25,7 @@ namespace Platformer
 
         public virtual void OnEnter()
         {
-            //Not Used
+            //Debug.Log(this.GetType().Name + ".OnEnter");
         }
 
         public virtual void Update()
@@ -40,9 +40,9 @@ namespace Platformer
 
         public virtual void OnExit()
         {
-            //Not Used
+            //Debug.Log(this.GetType().Name + ".OnExit");
         }
-        
+
     }
 
 }

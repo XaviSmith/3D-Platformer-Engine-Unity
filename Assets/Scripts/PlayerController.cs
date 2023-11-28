@@ -15,7 +15,6 @@ namespace Platformer
         [SerializeField] Animator animator;
         [SerializeField] CinemachineFreeLook freeLookVCam;
         [SerializeField] InputReader input;
-        [SerializeField] BaseAttack baseAttack;
 
         [Header("Movement Settings")]
         [SerializeField] float moveSpeed = 6f;
@@ -40,6 +39,10 @@ namespace Platformer
         [SerializeField] float airDashDuration = 0.25f;
         [SerializeField] float airDashForce = 10f;
         bool isAirDashing = false;
+
+        [Header("Attacks")]
+        [SerializeField] BaseAttack baseAttack;
+        [SerializeField] SlideAttack slideAttack;
 
         Transform mainCam; //Cache main camera since we reference it a lot
 
@@ -182,6 +185,7 @@ namespace Platformer
                 if (performed && !dashTimer.IsRunning && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
                 {
                     dashTimer.Start();
+                    slideAttack.StartAttack();
                 } 
             }
             
@@ -202,9 +206,15 @@ namespace Platformer
             }
         }
 
+        //TODO: Have one function for attacks or have the states call the attacks directly.
         public void Attack()
         {
             baseAttack.Attack(); //Called when we enter the Attack State to actually attack.
+        }
+
+        public void SlideAttack()
+        {
+            slideAttack.Attack();
         }
 
         //**********************************************************************

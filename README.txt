@@ -18,7 +18,9 @@ PACKAGES REQUIRED (All packages are free): Cartoon Remaster VFX (Free ver)
 FLOW: 
 SPAWNERS - See EntitySpawner.
 
-Base code started from tutorial series here https://www.youtube.com/watch?v=--_CH5DYz0M 
+REFERENCES
+Camera Movement - https://catlikecoding.com/unity/tutorials/movement/orbit-camera/
+Baseline Movement/AI/State Machine from tutorial series https://www.youtube.com/watch?v=--_CH5DYz0M 
 
 All Input handled by InputReader using the new Unity Input System and Settings/PlayerInputActions.inputActions as the control scheme 
 with things like the PlayerController and CameraManager using delegates to call function when certain inputs are pressed (E.g. input.Jump calls OnJump, input.EnableMouseControlCamera calls OnEnableMouseControlCamera)

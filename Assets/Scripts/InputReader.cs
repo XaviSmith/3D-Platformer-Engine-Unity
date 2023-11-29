@@ -20,6 +20,7 @@ namespace Platformer
         //Actions to call for each input in PlayerInputActions
         public event UnityAction<Vector2> Move = delegate { };
         public event UnityAction<Vector2, bool> Look = delegate { };
+        public event UnityAction<Vector2> MouseLook = delegate { };
         public event UnityAction EnableMouseControlCamera = delegate { };
         public event UnityAction DisableMouseControlCamera = delegate { };
         public event UnityAction<bool> Jump = delegate { };
@@ -28,7 +29,9 @@ namespace Platformer
 
         PlayerInputActions inputActions;
        
-        public Vector3 Direction => (Vector3)inputActions.Player.Move.ReadValue<Vector2>();  //basically Input.GetAxis();
+        public Vector3 Direction => inputActions.Player.Move.ReadValue<Vector2>();  //basically Input.GetAxis();
+        public Vector3 CamDirection => inputActions.Player.Look.ReadValue<Vector2>();
+        public Vector3 MouseCamDirection => inputActions.Player.MouseLook.ReadValue<Vector2>();
 
         //instantiate playerInputActions and set the callbacks
         void OnEnable()
@@ -54,6 +57,11 @@ namespace Platformer
         public void OnLook(InputAction.CallbackContext context)
         {
             Look.Invoke(context.ReadValue<Vector2>(), IsDeviceMouse(context));
+        }
+
+        public void OnMouseLook(InputAction.CallbackContext context)
+        {
+            MouseLook.Invoke(context.ReadValue<Vector2>());
         }
 
         bool IsDeviceMouse(InputAction.CallbackContext context) => context.control.device.name == "Mouse";

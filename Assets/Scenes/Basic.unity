@@ -5035,11 +5035,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   input: {fileID: 11400000, guid: a38f5b2be96e86e4a93a49ad9e7b8be1, type: 2}
   target: {fileID: 973630117}
-  distance: 40
+  offset: {x: 0, y: 0, z: 0}
+  distance: 35
   focusRadius: 1
   focusSmoothing: 0.5
   rotationSpeed: 90
+  realignDelay: 5
+  alignSmoothRange: 45
   camOrientation: {x: 14, y: -0.201}
+  minVerticalAngle: -30
+  maxVerticalAngle: 60
 --- !u!4 &973630117 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 196076084692136317, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}

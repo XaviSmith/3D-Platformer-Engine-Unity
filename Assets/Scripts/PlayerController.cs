@@ -44,7 +44,7 @@ namespace Platformer
         [SerializeField] BaseAttack baseAttack;
         [SerializeField] SlideAttack slideAttack;
 
-        Transform mainCam; //Cache main camera since we reference it a lot
+        [SerializeField] Transform mainCam; //The camera we use to determine our relative movement
 
         float currSpeed;
         float velocity; //output var for SmoothDamp
@@ -76,7 +76,11 @@ namespace Platformer
         private void Awake()
         {
             //Set cameras
-            mainCam = Camera.main.transform;
+            if(mainCam == null)
+            {
+                mainCam = Camera.main.transform;
+            }
+            
             freeLookVCam.Follow = transform;
             freeLookVCam.LookAt = transform;
             freeLookVCam.OnTargetObjectWarped(transform, transform.position - freeLookVCam.transform.position - Vector3.forward); //For when our target warps to somewhere else, how do we update the camera to move to them

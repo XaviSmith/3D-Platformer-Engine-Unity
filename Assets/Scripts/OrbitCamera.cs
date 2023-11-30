@@ -19,7 +19,7 @@ namespace Platformer
         [SerializeField, Range(0f, 360f)] float rotationSpeed = 90f;
         [SerializeField, Min(0f)] float realignDelay = 5f; //how long before we start manually delaying the camera
         [SerializeField, Range(0f, 90f)] float alignSmoothRange = 45; // what angle do we automatically realign at full speed
-
+        
         Vector3 focusPoint; //Where we're looking
         Vector3 prevFocusPoint;
 
@@ -28,6 +28,8 @@ namespace Platformer
         [SerializeField, Range(-89f, 89f)] float maxVerticalAngle = 60f;
         const float DeadZone = 0.001f;
 
+        Camera _camera;
+        
         bool isRotatingCamera = false;
         float lastManualRotationTime;
 
@@ -35,8 +37,23 @@ namespace Platformer
         bool isRMBPressed; //right mouse button;
         bool cameraMovementLock; //used for a frame when we disable movement    
 
+        //LayerMask for if we use the boxCast to detect collisions and want it to ignore things
+        //[SerializeField] LayerMask obstructionMask = -1;
+
+        //HalfExtends for the boxcast to detect collisions 
+        Vector3 CameraHalfExtends {
+            get {
+                Vector3 halfExtends;
+                halfExtends.y = _camera.nearClipPlane * Mathf.Tan(0.5f * Mathf.Deg2Rad * _camera.fieldOfView);
+                halfExtends.x = halfExtends.y * _camera.aspect;
+                halfExtends.z = 0f;
+                return halfExtends;
+            }
+        } 
+
         void Awake()
         {
+            _camera = GetComponent<Camera>();
             focusPoint = target.position + offset;
             transform.localRotation = Quaternion.Euler(camOrientation);
             ClampAngles();
@@ -124,6 +141,22 @@ namespace Platformer
 
             Vector3 lookDirection = lookRotation * Vector3.forward;
             Vector3 lookPosition = focusPoint - lookDirection * distance; //offset the camera by look direciton and distance
+
+            /* For if we want to make sure the camera never clips Geometry. Slightly buggy. 
+            //ideal focus point
+            Vector3 rectOffset = lookDirection * _camera.nearClipPlane;
+            Vector3 rectPosition = lookPosition + rectOffset;
+            Vector3 castLine = rectPosition - target.position;
+            float castDistance = castLine.magnitude;
+            Vector3 castDirection = castLine / castDistance;
+
+            //Boxcast to prevent clipping through geometry. If we hit something pull camera in front if it
+            if(Physics.BoxCast(target.position, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask))
+            {
+                rectPosition = target.position + castDirection * hit.distance;
+                lookPosition = rectPosition - rectOffset;
+            }
+            */
             transform.SetPositionAndRotation(lookPosition, lookRotation);
         }
 

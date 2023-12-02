@@ -9,6 +9,8 @@ namespace Platformer
     [RequireComponent(typeof(Camera))]
     public class OrbitCamera : MonoBehaviour
     {
+        [SerializeField] bool checkCollisions;
+        [SerializeField] LayerMask obstructionMask = -1;
         [Header("References")]
         [SerializeField] InputReader input;
         [SerializeField] Transform target;
@@ -36,9 +38,6 @@ namespace Platformer
         //mouse input
         bool isRMBPressed; //right mouse button;
         bool cameraMovementLock; //used for a frame when we disable movement    
-
-        //LayerMask for if we use the boxCast to detect collisions and want it to ignore things
-        //[SerializeField] LayerMask obstructionMask = -1;
 
         //HalfExtends for the boxcast to detect collisions 
         Vector3 CameraHalfExtends {
@@ -142,21 +141,27 @@ namespace Platformer
             Vector3 lookDirection = lookRotation * Vector3.forward;
             Vector3 lookPosition = focusPoint - lookDirection * distance; //offset the camera by look direciton and distance
 
-            /* For if we want to make sure the camera never clips Geometry. Slightly buggy. 
-            //ideal focus point
-            Vector3 rectOffset = lookDirection * _camera.nearClipPlane;
-            Vector3 rectPosition = lookPosition + rectOffset;
-            Vector3 castLine = rectPosition - target.position;
-            float castDistance = castLine.magnitude;
-            Vector3 castDirection = castLine / castDistance;
-
-            //Boxcast to prevent clipping through geometry. If we hit something pull camera in front if it
-            if(Physics.BoxCast(target.position, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask))
+            // For if we want to make sure the camera never clips Geometry. Slightly buggy. 
+            if(checkCollisions)
             {
-                rectPosition = target.position + castDirection * hit.distance;
-                lookPosition = rectPosition - rectOffset;
+                //ideal focus point
+                Vector3 rectOffset = lookDirection * _camera.nearClipPlane;
+                Vector3 rectPosition = lookPosition + rectOffset;
+                Vector3 castLine = rectPosition - target.position;
+                float castDistance = castLine.magnitude;
+                Vector3 castDirection = castLine / castDistance;
+
+                //Boxcast to prevent clipping through geometry. If we hit something pull camera in front if it
+                if (Physics.BoxCast(target.position, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask))
+                {
+                    rectPosition = target.position + castDirection * hit.distance;
+                    lookPosition = rectPosition - rectOffset;
+                }
+
             }
-            */
+
+            //*******
+
             transform.SetPositionAndRotation(lookPosition, lookRotation);
         }
 

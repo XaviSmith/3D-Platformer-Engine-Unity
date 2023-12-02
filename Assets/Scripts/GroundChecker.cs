@@ -63,14 +63,9 @@ namespace Platformer
 
             Gizmos.color = Color.blue;
             Gizmos.DrawLine(transform.position - offset + Vector3.down * groundCastDistance + (Vector3.down * detectionRadius), transform.position - offset + (Vector3.down * detectionRadius));
-            if (CheckSphereCast())
-            {
-                Gizmos.color = Color.green;
-            } else
-            {
-                Gizmos.color = Color.red;
-            }
-     
+
+            Gizmos.color = CheckSphereCast() ? Color.green : Color.red;
+
             Gizmos.DrawWireSphere(transform.position - offset + (Vector3.down * groundCastDistance), detectionRadius);
         }
     }

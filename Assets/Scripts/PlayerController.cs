@@ -12,6 +12,7 @@ namespace Platformer
         [Header("References")]
         [SerializeField] Rigidbody rb;
         [SerializeField] GroundChecker groundChecker;
+        [SerializeField] WallJumpChecker wallJumpChecker;
         [SerializeField] Animator animator;
         [SerializeField] CinemachineFreeLook freeLookVCam;
         [SerializeField] InputReader input;
@@ -100,6 +101,8 @@ namespace Platformer
             LocomotionState locomotionState = new LocomotionState(this, animator);
             JumpState jumpState = new JumpState(this, animator);
             FallState fallState = new FallState(this, animator);
+            WallSlideState wallSlideState = new WallSlideState(this, animator);
+            WallJumpState wallJumpState = new WallJumpState(this, animator);
             DashState dashState = new DashState(this, animator);
             DashJumpState dashJumpState = new DashJumpState(this, animator);
             AttackState attackState = new AttackState(this, animator);
@@ -111,6 +114,9 @@ namespace Platformer
             AddTransition(locomotionState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
             AddTransition(jumpState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddTransition(fallState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall));
+            AddTransition(wallSlideState, wallJumpState, new FuncPredicate(() => !groundChecker.IsGrounded && jumpTimer.IsRunning));
+            AddTransition(wallJumpState, fallState, new FuncPredicate(() => !jumpTimer.IsRunning));
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, dashJumpState, new FuncPredicate(() => jumpTimer.IsRunning && dashTimer.IsRunning));
@@ -174,7 +180,7 @@ namespace Platformer
 
         void OnJump(bool performed)
         {
-            if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && groundChecker.IsGrounded)
+            if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && (groundChecker.IsGrounded || wallJumpChecker.IsTouchingWall))
             {
                 jumpTimer.Start();
             } else if(!performed && jumpTimer.IsRunning) //We let go of the jump button early, shorthop

@@ -15,7 +15,13 @@ public class WallSlideState : BaseState
 
     public override void FixedUpdate()
     {
+        player.HandleWallSlide();
+    }
+
+    public override void OnExit()
+    {
         base.OnExit();
+        player.FlipDirectionFromWall();
     }
 
 }

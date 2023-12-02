@@ -15,9 +15,8 @@ public class WallJumpState : BaseState
 
     public override void FixedUpdate()
     {
-        base.OnExit();
-        player.HandleMovement();
-        player.HandleJump();
+        //player.HandleMovement();
+        player.HandleWallJump();
     }
 
 }

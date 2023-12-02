@@ -14,22 +14,32 @@ public class WallJumpChecker : MonoBehaviour
     [SerializeField] float wallCastDistance = 0.08f; //How far to spherecast to detect ground
     [SerializeField] Vector3 offset;
     [SerializeField] float checkRadius;
+    [SerializeField] Collider _collider;
+    [SerializeField] public Vector3 WallNormal;
     public bool IsWallSliding { get; set; }
-
-    public bool wallSlideSpeed; //move to playercontroller
 
     bool CheckWallCast()
     {
-        /*Collider[] hits = Physics.OverlapSphere(transform.forward + offset, checkRadius, wallLayer);
+        RaycastHit hit;
+        /*
+        Vector3 castCenter = origin.position + offset + (origin.forward * wallCastDistance);
+        //Cast the sphere towards the front of the player 
+        Collider[] hits = Physics.OverlapSphere(castCenter, checkRadius, wallLayers);
 
         if(hits.Length > 0)
         {
+            wallDirection = hits[0].ClosestPoint(castCenter);
+            wallDirection.y = castCenter.y;
+            Debug.Log("WALL DIRECTION: " + wallDirection);
             return true;
         }
 
+        wallDirection = Vector3.zero;
         return false;
         */
-        return Physics.SphereCast(origin.position + offset, checkRadius, origin.forward, out _, wallCastDistance, wallLayers);
+        bool hitWall = Physics.SphereCast(origin.position + offset, checkRadius, origin.forward, out hit, wallCastDistance, wallLayers);
+        WallNormal = hitWall ? hit.normal.normalized : Vector3.zero;
+        return hitWall;
     }
 
     void Update()
@@ -41,10 +51,15 @@ public class WallJumpChecker : MonoBehaviour
     {
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(origin.position + offset + origin.forward * wallCastDistance + (origin.forward * checkRadius), origin.position + offset + (origin.forward * checkRadius));
-
+        if(WallNormal != Vector3.zero)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawLine(origin.position + offset + (origin.forward * wallCastDistance), origin.position + offset + (origin.forward * wallCastDistance) - WallNormal);
+        }
+        
         Gizmos.color = IsTouchingWall ? Color.green : Color.yellow;
 
-        //Gizmos.DrawWireSphere(origin.position + offset, checkRadius);
+        //Gizmos.DrawWireSphere(origin.position + offset + (origin.forward * wallCastDistance), checkRadius);
 
         Gizmos.DrawWireSphere(origin.position + offset + (origin.forward * wallCastDistance), checkRadius);
     }

@@ -4641,7 +4641,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 1871407528}
 --- !u!33 &896085899
@@ -10466,6 +10466,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MovingPlatformVert
       objectReference: {fileID: 0}
+    - target: {fileID: 8502487287147532238, guid: a6a34b10a2daede46b0a0200a2db8b25, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -10670,6 +10674,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0.64
       objectReference: {fileID: 0}
+    - target: {fileID: 3365837677303133494, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3415355795389162206, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.0004505579
@@ -10678,6 +10686,10 @@ PrefabInstance:
       propertyPath: hitbox
       value: 
       objectReference: {fileID: 1067799720}
+    - target: {fileID: 4655236499012759444, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: groundLayers.m_Bits
+      value: 320
+      objectReference: {fileID: 0}
     - target: {fileID: 5044550090603263865, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.9999999
@@ -10691,9 +10703,25 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 257760750}
     - target: {fileID: 8496184050805263032, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: wallJumpForce
+      value: 24
+      objectReference: {fileID: 0}
+    - target: {fileID: 8496184050805263032, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
       propertyPath: wallJumpChecker
       value: 
       objectReference: {fileID: 7520177688033314934}
+    - target: {fileID: 8496184050805263032, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: wallJumpForce.x
+      value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 8496184050805263032, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: wallJumpForce.y
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 8496184050805263032, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
+      propertyPath: wallJumpCooldown
+      value: 0.2
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -10728,14 +10756,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a40a58960ecbf34998f17e334b2066d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  wallLayer:
+  wallLayers:
     serializedVersion: 2
-    m_Bits: 64
+    m_Bits: 320
   origin: {fileID: 973630117}
-  wallCastDistance: 0.24
+  wallCastDistance: 0.17
   offset: {x: 0, y: 1.22, z: 0}
-  checkRadius: 0.87
-  wallSlideSpeed: 0
+  checkRadius: 1
+  _collider: {fileID: 0}
+  WallNormal: {x: 0, y: 0, z: 0}
 --- !u!1001 &9150042174354052756
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10744,6 +10773,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1283626575599851950, guid: e93976a951dddf74e9e7b1a62833693f, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4098227741707732236, guid: e93976a951dddf74e9e7b1a62833693f, type: 3}
       propertyPath: m_RootOrder
       value: 6

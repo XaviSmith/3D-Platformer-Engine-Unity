@@ -14,6 +14,7 @@ namespace Platformer
         [Header("References")]
         [SerializeField] InputReader input;
         [SerializeField] Transform target;
+        Vector3 targetPosition;
         [SerializeField] Vector3 offset;
         [SerializeField, Range(1f, 200f)] float distance;
         [SerializeField, Min(0f)] float focusRadius = 1f; //How much can the player move before we move the cam with them
@@ -53,7 +54,8 @@ namespace Platformer
         void Awake()
         {
             _camera = GetComponent<Camera>();
-            focusPoint = target.position + offset;
+            targetPosition = target.position + offset;
+            focusPoint = targetPosition;
             transform.localRotation = Quaternion.Euler(camOrientation);
             ClampAngles();
         }
@@ -124,6 +126,7 @@ namespace Platformer
         // Late update so it updates after player movement
         void LateUpdate()
         {
+            targetPosition = target.position + offset;
             UpdateFocusPoint();
             ManualRotation();
 
@@ -141,20 +144,20 @@ namespace Platformer
             Vector3 lookDirection = lookRotation * Vector3.forward;
             Vector3 lookPosition = focusPoint - lookDirection * distance; //offset the camera by look direciton and distance
 
-            // For if we want to make sure the camera never clips Geometry. Slightly buggy. 
+            // For if we want to make sure the camera never clips Geometry. Try raising the offset higher if this acts buggy on slopes
             if(checkCollisions)
             {
                 //ideal focus point
                 Vector3 rectOffset = lookDirection * _camera.nearClipPlane;
                 Vector3 rectPosition = lookPosition + rectOffset;
-                Vector3 castLine = rectPosition - target.position;
+                Vector3 castLine = rectPosition - targetPosition;
                 float castDistance = castLine.magnitude;
                 Vector3 castDirection = castLine / castDistance;
 
                 //Boxcast to prevent clipping through geometry. If we hit something pull camera in front if it
-                if (Physics.BoxCast(target.position, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask))
+                if (Physics.BoxCast(targetPosition, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask))
                 {
-                    rectPosition = target.position + castDirection * hit.distance;
+                    rectPosition = targetPosition + castDirection * hit.distance;
                     lookPosition = rectPosition - rectOffset;
                 }
 
@@ -168,7 +171,7 @@ namespace Platformer
         void UpdateFocusPoint()
         {
             prevFocusPoint = focusPoint;
-            Vector3 targetPoint = target.position + offset;
+            Vector3 targetPoint = targetPosition + offset;
 
             //If we have a focus radius and we're outside of it, lerp back into it
             if (focusRadius > 0f)
@@ -192,7 +195,7 @@ namespace Platformer
             }
             else
             {
-                focusPoint = target.position;
+                focusPoint = targetPosition;
             }
 
         }

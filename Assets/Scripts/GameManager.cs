@@ -2,32 +2,50 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+namespace Platformer
 {
-    public static GameManager Instance { get; private set; }
-
-    public int Score { get; private set; }
-
-    void Awake()
+    public class GameManager : MonoBehaviour
     {
-        if (Instance == null)
+        public static GameManager Instance { get; private set; }
+        List<PlayerManager> Players { get; set; } = new List<PlayerManager>();
+        public Transform MainPlayer { get; private set; }
+        public int Score { get; private set; }
+
+        void Awake()
         {
-            Instance = this;
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
-        else
+
+        public void AddPlayer(PlayerManager player)
         {
-            Destroy(gameObject);
+            if(!Players.Contains(player))
+            {
+                Players.Add(player);
+            }  
+            
+            if(MainPlayer == null)
+            {
+                MainPlayer = Players[0].transform;
+            }
+        }
+
+        private void OnEnable()
+        {
+            //EventManager<int>.StartListening(Events.UPDATESCORE.ToString(), AddScore);
+        }
+
+        public void AddScore(int score)
+        {
+            Debug.Log("Adding " + score + " to score.");
+            Score += score;
         }
     }
 
-    private void OnEnable()
-    {
-        //EventManager<int>.StartListening(Events.UPDATESCORE.ToString(), AddScore);
-    }
-
-    public void AddScore(int score)
-    {
-        Debug.Log("Adding " + score + " to score.");
-        Score += score;
-    }
 }

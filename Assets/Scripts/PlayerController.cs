@@ -9,6 +9,8 @@ namespace Platformer
 {
     public class PlayerController : MonoBehaviour
     {
+        public static Transform Transform { get; private set; } //We can move this to GameManager and add players to a list if we decide to have multiple, but this is good enough for now.
+
         [Header("References")]
         [SerializeField] Rigidbody rb;
         [SerializeField] GroundChecker groundChecker;
@@ -85,6 +87,8 @@ namespace Platformer
 
         private void Awake()
         {
+            //Set transform instance
+            Transform = transform;
             //Set cameras
             if(mainCam == null)
             {
@@ -213,7 +217,7 @@ namespace Platformer
                 if (performed && groundChecker.IsGrounded && !dashTimer.IsRunning && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
                 {
                     dashTimer.Start();
-                    slideAttack.StartAttack();
+                    slideAttack.StartAttackTimer();
                 } 
             }
             
@@ -224,7 +228,7 @@ namespace Platformer
             //ground Attack
             if(groundChecker.IsGrounded)
             {
-                baseAttack.StartAttack(); //Start the timer if we're not in cooldown and set the bool to transition our state.
+                baseAttack.StartAttackTimer(); //Start the timer if we're not in cooldown and set the bool to transition our state.
             }     
             
             //air Attack

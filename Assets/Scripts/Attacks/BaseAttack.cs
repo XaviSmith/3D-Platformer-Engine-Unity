@@ -7,7 +7,6 @@ using Utils;
 public abstract class BaseAttack : MonoBehaviour, IAttack, IHitboxListener
 {
     [SerializeField] Hitbox hitbox;
-    [SerializeField] float attackDistance;
     [SerializeField] int attackDamage;
     [SerializeField] protected float cooldownTime;
     [SerializeField] string targetTag; //who do we hit, e.g. enemies etc
@@ -38,7 +37,7 @@ public abstract class BaseAttack : MonoBehaviour, IAttack, IHitboxListener
         }
     }
 
-    public virtual void StartAttack()
+    public virtual void StartAttackTimer()
     {
         if (!attackTimer.IsRunning)
         {         
@@ -66,14 +65,13 @@ public abstract class BaseAttack : MonoBehaviour, IAttack, IHitboxListener
 
     public void CollidingWith(Collider collider)
     {
-        Debug.Log(collider.name);
+        
         if (collider.CompareTag(targetTag))
         {
-            Debug.Log("TAKE DAMAGE DAMMIT");
+            //Debug.Log("COLLIDER COLLIDING WITH " + collider.name); //for debugging.
             collider.GetComponent<Health>()?.TakeDamage(attackDamage);
-        }
-
-        Hurtbox hurtbox = collider.GetComponent<Hurtbox>();
-        hurtbox?.GetHit(attackDamage);
+            Hurtbox hurtbox = collider.GetComponent<Hurtbox>();
+            hurtbox?.GetHit(attackDamage);
+        }   
     }
 }

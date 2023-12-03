@@ -10,9 +10,9 @@ public class Hitbox : MonoBehaviour
     [SerializeField] float radius;
 
     [Header("Debug Settings")]
-    [SerializeField] Color32 inactiveColor;
-    [SerializeField] Color32 activeColor;
-    [SerializeField] Color32 collidingColor;
+    [SerializeField] Color32 inactiveColor = Color.red;
+    [SerializeField] Color32 activeColor = Color.blue;
+    [SerializeField] Color32 collidingColor = Color.green;
     [SerializeField] ColliderState colliderState;
     IHitboxListener listener = null;
 
@@ -32,7 +32,7 @@ public class Hitbox : MonoBehaviour
             for (int i = 0; i < colliders.Length; i++)
             {
                 Collider _collider = colliders[i];
-                Debug.Log("We hit something");               
+                //Debug.Log("WE HIT " + _collider.gameObject.name); //For debugging
                 listener?.CollidingWith(_collider);
             }
         }

@@ -35,6 +35,7 @@ public class Hurtbox : MonoBehaviour
     {
         if(!damageTimer.IsRunning)
         {
+            //Debug.Log(healthObj.transform.name + " GOT HIT");
             damageTimer.Start();
             healthObj.TakeDamage(damage);
         }

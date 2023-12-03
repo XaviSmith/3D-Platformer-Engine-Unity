@@ -30,6 +30,9 @@ namespace Platformer
         void AddTransition(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
         void AddAnyTransition(IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
 
+        [Header("Attacks")]
+        [SerializeField] BaseAttack baseAttack;
+
         CountdownTimer attackTimer; //how long should an attack take
         CountdownTimer deathTimer; //How long after dying before we poof away;
 
@@ -64,14 +67,14 @@ namespace Platformer
             //************State machine************
             stateMachine = new StateMachine();
             EnemyWanderState wanderState = new EnemyWanderState(this, animator, agent, wanderRadius);
-            EnemyChaseState chaseState = new EnemyChaseState(this, animator, agent, playerDetector.Player); //Refactor this to use playerController to get player
-            EnemyAttackState attackState = new EnemyAttackState(this, animator, agent, playerDetector.Player);
+            EnemyChaseState chaseState = new EnemyChaseState(this, animator, agent, GameManager.Instance.MainPlayer); //Refactor this to use playerController to get player
+            EnemyAttackState attackState = new EnemyAttackState(this, animator, agent, GameManager.Instance.MainPlayer);
             EnemyDeathState deathState = new EnemyDeathState(this, animator);
 
             AddTransition(wanderState, chaseState, new FuncPredicate(playerDetector.CanDetectPlayer));
             AddTransition(chaseState, wanderState, new FuncPredicate(() => !playerDetector.CanDetectPlayer()));
             AddTransition(chaseState, attackState, new FuncPredicate(playerDetector.CanAttackPlayer));
-            AddTransition(attackState, chaseState, new FuncPredicate(() => !playerDetector.CanAttackPlayer()));
+            AddTransition(attackState, chaseState, new FuncPredicate(() => playerDetector.CanDetectPlayer() && !baseAttack.IsRunning));
 
             AddAnyTransition(deathState, new FuncPredicate(() => health.IsDead));
 
@@ -95,14 +98,15 @@ namespace Platformer
 
         public void Attack()
         {
-            if(attackTimer.IsRunning)
+            if(baseAttack.IsRunning)
             {
                 return;
             }
 
-            attackTimer.Start();
-            playerDetector.PlayerHealth.TakeDamage(10);
-            Debug.Log("Enemy.Attack");
+            baseAttack.StartAttackTimer();
+            baseAttack.Attack();
+            //playerDetector.PlayerHealth?.TakeDamage(10);
+            //Debug.Log("Enemy.Attack");
         }
 
         public void Die()
@@ -110,7 +114,7 @@ namespace Platformer
             if(!deathTimer.IsRunning)
             {
                 agent.enabled = false;
-                transform.LookAt(playerDetector.Player);
+                transform.LookAt(GameManager.Instance.MainPlayer);
                 deathTimer.Start();
             }
             

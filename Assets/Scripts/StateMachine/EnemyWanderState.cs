@@ -21,7 +21,6 @@ namespace Platformer
         public override void OnEnter()
         {
             base.OnEnter();
-            Debug.Log("EnemyWanderState.OnEnter()");
             animator.CrossFade(WalkHash, CROSSFADEDURATION);
         }
 

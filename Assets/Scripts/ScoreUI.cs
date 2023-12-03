@@ -2,25 +2,28 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ScoreUI : MonoBehaviour
+namespace Platformer
 {
-    [SerializeField] TMPro.TextMeshProUGUI scoreText;
-
-    void Start()
+    public class ScoreUI : MonoBehaviour
     {
-        UpdateScoreText();
-    }
+        [SerializeField] TMPro.TextMeshProUGUI scoreText;
 
-    public void UpdateScoreText()
-    {
-        //Done in a coroutine to give all logic time to run before updating the score
-        StartCoroutine(UpdateScoreCoroutineText());
-    }
+        void Start()
+        {
+            UpdateScoreText();
+        }
+
+        public void UpdateScoreText()
+        {
+            //Done in a coroutine to give all logic time to run before updating the score
+            StartCoroutine(UpdateScoreCoroutineText());
+        }
 
 
-    IEnumerator UpdateScoreCoroutineText()
-    {
-        yield return null;
-        scoreText.text = GameManager.Instance.Score.ToString();
+        IEnumerator UpdateScoreCoroutineText()
+        {
+            yield return null;
+            scoreText.text = GameManager.Instance.Score.ToString();
+        }
     }
 }

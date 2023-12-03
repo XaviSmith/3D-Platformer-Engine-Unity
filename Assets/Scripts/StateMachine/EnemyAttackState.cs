@@ -19,15 +19,14 @@ namespace Platformer
         public override void OnEnter()
         {
             base.OnEnter();
-            Debug.Log("EnemyAttackState.OnEnter");
+            enemy.Attack();
             animator.CrossFade(AttackHash, CROSSFADEDURATION);
         }
 
         public override void Update()
         {
             base.Update();
-            agent.SetDestination(target.position);
-            enemy.Attack();
+            agent.SetDestination(target.position);         
         }
     }
 }

@@ -15,7 +15,6 @@ public class PlayerDetector : MonoBehaviour
     [SerializeField] float attackRange = 2f;
 
     public Transform Player { get; private set; }
-    public Health PlayerHealth { get; private set; }
 
     CountdownTimer detectionTimer;
 
@@ -23,8 +22,7 @@ public class PlayerDetector : MonoBehaviour
 
     void Awake()
     {
-        Player = GameObject.FindGameObjectWithTag("Player").transform; //TODO: Get player more neatly from PlayerController
-        PlayerHealth = Player.GetComponent<Health>();
+        Player = GameObject.FindGameObjectWithTag("Player").transform; //Find isn't great, but keeping this generic and separated from Platformer namespace for github version.
     }
 
     void Start()

@@ -5393,7 +5393,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   input: {fileID: 11400000, guid: a38f5b2be96e86e4a93a49ad9e7b8be1, type: 2}
   target: {fileID: 973630117}
-  offset: {x: 0, y: 0, z: 0}
+  offset: {x: 0, y: 1.22, z: 0}
   distance: 35
   focusRadius: 1
   focusSmoothing: 0.5
@@ -10712,15 +10712,15 @@ PrefabInstance:
       objectReference: {fileID: 7520177688033314934}
     - target: {fileID: 8496184050805263032, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
       propertyPath: wallJumpForce.x
-      value: 30
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 8496184050805263032, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
       propertyPath: wallJumpForce.y
-      value: 60
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 8496184050805263032, guid: 2618fcf8d2db91a4da68a4aa1b68d453, type: 3}
       propertyPath: wallJumpCooldown
-      value: 0.2
+      value: 0.4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

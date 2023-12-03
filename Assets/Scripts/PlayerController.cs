@@ -19,6 +19,7 @@ namespace Platformer
 
         [Header("Movement Settings")]
         [SerializeField] float moveSpeed = 6f;
+        [SerializeField] float airSpeed = 20f; //if we exceed this value, slow us down.
         [SerializeField] float rotationSpeed = 15f;
         [SerializeField] float smoothTime = 0.2f; //how fast the animator changes speed
 
@@ -65,7 +66,7 @@ namespace Platformer
         CountdownTimer jumpTimer;
         CountdownTimer jumpCooldownTimer; //if we want a cooldown on how long after landing before we can jump again.
 
-        CountdownTimer wallJumpCooldownTimer;
+        CountdownTimer wallJumpTimer;
 
         CountdownTimer dashTimer;
         CountdownTimer dashCooldownTimer;
@@ -122,10 +123,10 @@ namespace Platformer
             AddTransition(locomotionState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
             AddTransition(jumpState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
-            AddTransition(fallState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && jumpVelocity <= 0f && !wallJumpCooldownTimer.IsRunning));
-            AddTransition(wallSlideState, wallJumpState, new FuncPredicate(() => !groundChecker.IsGrounded && jumpTimer.IsRunning));
-            AddTransition(wallSlideState, fallState, new FuncPredicate(() => !wallJumpCooldownTimer.IsRunning && !wallJumpChecker.IsTouchingWall));
-            AddTransition(wallJumpState, fallState, new FuncPredicate(() => !jumpTimer.IsRunning && !wallJumpCooldownTimer.IsRunning));
+            AddTransition(fallState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && jumpVelocity <= 0f && !wallJumpTimer.IsRunning));
+            AddTransition(wallSlideState, wallJumpState, new FuncPredicate(() => !groundChecker.IsGrounded && wallJumpTimer.IsRunning));
+            AddTransition(wallSlideState, fallState, new FuncPredicate(() => !wallJumpTimer.IsRunning && !wallJumpChecker.IsTouchingWall));
+            AddTransition(wallJumpState, fallState, new FuncPredicate(() => !jumpTimer.IsRunning && !wallJumpTimer.IsRunning));
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, dashJumpState, new FuncPredicate(() => jumpTimer.IsRunning && dashTimer.IsRunning));
@@ -145,12 +146,12 @@ namespace Platformer
             jumpCooldownTimer = new CountdownTimer(jumpCooldown);
             dashTimer = new CountdownTimer(dashDuration);
             dashCooldownTimer = new CountdownTimer(dashCooldown);
-            wallJumpCooldownTimer = new CountdownTimer(wallJumpCooldown);
+            wallJumpTimer = new CountdownTimer(wallJumpCooldown);
 
             jumpTimer.OnTimerStart += () => jumpVelocity = jumpForce; //whenever timer starts we start out with jumpForce
             jumpTimer.OnTimerStop += () => jumpCooldownTimer.Start(); //For if we want a cooldown on how long after landing we want to be able to jump again.
 
-            wallJumpCooldownTimer.OnTimerStop += () => jumpVelocity = 0f;
+            wallJumpTimer.OnTimerStop += () => jumpVelocity = 0f;
             dashTimer.OnTimerStart += () =>
             {
                 isDashing = true;
@@ -171,7 +172,7 @@ namespace Platformer
             };
 
 
-            timers = new List<Timer>(5) { jumpTimer, jumpCooldownTimer, wallJumpCooldownTimer, dashTimer, dashCooldownTimer}; //defining capacity for some optimization;
+            timers = new List<Timer>(5) { jumpTimer, jumpCooldownTimer, wallJumpTimer, dashTimer, dashCooldownTimer}; //defining capacity for some optimization;
         }
         //*****************************Jumping (also see HandleJump lower down)*****************************
 
@@ -191,7 +192,7 @@ namespace Platformer
 
         void OnJump(bool performed)
         {
-            if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && (groundChecker.IsGrounded || wallJumpChecker.IsTouchingWall))
+            if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && groundChecker.IsGrounded)
             {
                 jumpTimer.Start();
             } else if(!performed && jumpTimer.IsRunning) //We let go of the jump button early, shorthop
@@ -199,9 +200,9 @@ namespace Platformer
                 jumpTimer.Stop();
             }
 
-            if(performed && !wallJumpCooldownTimer.IsRunning && wallJumpChecker.IsTouchingWall && !groundChecker.IsGrounded)
+            if(performed && !wallJumpTimer.IsRunning && wallJumpChecker.IsTouchingWall && !groundChecker.IsGrounded)
             {
-                wallJumpCooldownTimer.Start();
+                wallJumpTimer.Start();
             }
         }
 
@@ -310,7 +311,7 @@ namespace Platformer
 
         public void HandleWallJump()
         {
-            jumpVelocity = wallJumpForce.y * wallJumpCooldownTimer.Progress;
+            jumpVelocity = wallJumpForce.y * wallJumpTimer.Progress;
 
             rb.velocity = new Vector3(lastWallDirection.x * wallJumpForce.x, jumpVelocity, lastWallDirection.z * wallJumpForce.x);
         }
@@ -344,8 +345,9 @@ namespace Platformer
             //Have movement direction be relative to our camera's rotation around the y axis (vector3.up)
             Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
             adjustedDirection = Vector3.ProjectOnPlane(adjustedDirection, groundChecker.CurrSlopeNormal);
-
+                   
             HandleRotation(adjustedDirection);
+
             //transform.rotation = Quaternion.LookRotation(Vector3.Cross(transform.right, groundChecker.currSlopeNormal));
 
             if (adjustedDirection.magnitude > 0)
@@ -374,8 +376,14 @@ namespace Platformer
         }
 
         void HandleRotation(Vector3 adjustedDirection)
-        {        
-            Quaternion targetRotation = Quaternion.LookRotation(adjustedDirection);
+        {
+            if(!groundChecker.IsGrounded)
+            {
+                //transform.rotation= new Quaternion(0f, transform.rotation.y, transform.rotation.z, transform.rotation.w);
+                adjustedDirection = new Vector3(wallJumpTimer.IsRunning ? adjustedDirection.x : transform.forward.x, adjustedDirection.y, wallJumpTimer.IsRunning ? adjustedDirection.z : transform.forward.z);
+            } 
+
+            //Quaternion targetRotation = Quaternion.LookRotation(adjustedDirection);
             //transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
             transform.LookAt(transform.position + adjustedDirection); //Have player look where they're going
         }
@@ -383,8 +391,23 @@ namespace Platformer
         //Move the player
         void HandleHorizontalMovement(Vector3 adjustedDirection)
         {
+            if(!groundChecker.IsGrounded)
+            {
+                HandleAirMovement(adjustedDirection);
+                return;
+            }
+
             Vector3 velocity = adjustedDirection * moveSpeed * dashVelocity * Time.fixedDeltaTime;
             rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
+        }
+
+        void HandleAirMovement(Vector3 adjustedDirection)
+        {
+            //If we're above airspeed slow us down, otherwise speed us up.
+            float targetSpeed = new Vector2(rb.velocity.x, rb.velocity.z).magnitude < airSpeed ? airSpeed : -airSpeed;
+
+            Vector3 velocity = adjustedDirection * airSpeed * Time.fixedDeltaTime;
+            rb.velocity += new Vector3(velocity.x, 0f, velocity.z);
         }
 
         public void HaltVerticalAirMomentum() //For airdashes since we don't want to rise or fall
@@ -398,7 +421,7 @@ namespace Platformer
 
         public void FlipDirectionFromWall()
         {
-            Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * wallJumpChecker.WallNormal;
+            Vector3 adjustedDirection = wallJumpChecker.WallNormal;
             HandleRotation(adjustedDirection);
         }
 

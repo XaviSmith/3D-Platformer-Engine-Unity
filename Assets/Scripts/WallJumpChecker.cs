@@ -18,6 +18,10 @@ public class WallJumpChecker : MonoBehaviour
     [SerializeField] public Vector3 WallNormal;
     public bool IsWallSliding { get; set; }
 
+    [Header("Debug Settings")]
+    [SerializeField] bool drawWallCheck = true;
+    [SerializeField] bool drawWallNormal = true;
+
     bool CheckWallCast()
     {
         RaycastHit hit;
@@ -49,18 +53,23 @@ public class WallJumpChecker : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.blue;
-        Gizmos.DrawLine(origin.position + offset + origin.forward * wallCastDistance + (origin.forward * checkRadius), origin.position + offset + (origin.forward * checkRadius));
-        if(WallNormal != Vector3.zero)
+        if(drawWallCheck)
         {
-            Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(origin.position + offset + (origin.forward * wallCastDistance), origin.position + offset + (origin.forward * wallCastDistance) - WallNormal);
+            Gizmos.color = Color.blue;
+            Gizmos.DrawLine(origin.position + offset + origin.forward * wallCastDistance + (origin.forward * checkRadius), origin.position + offset + (origin.forward * checkRadius));
+
+            if (drawWallNormal && WallNormal != Vector3.zero)
+            {
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawLine(origin.position + offset + (origin.forward * wallCastDistance), origin.position + offset + (origin.forward * wallCastDistance) - WallNormal);
+            }
+
+            Gizmos.color = IsTouchingWall ? Color.green : Color.yellow;
+
+            //Gizmos.DrawWireSphere(origin.position + offset + (origin.forward * wallCastDistance), checkRadius);
+
+            Gizmos.DrawWireSphere(origin.position + offset + (origin.forward * wallCastDistance), checkRadius);
         }
         
-        Gizmos.color = IsTouchingWall ? Color.green : Color.yellow;
-
-        //Gizmos.DrawWireSphere(origin.position + offset + (origin.forward * wallCastDistance), checkRadius);
-
-        Gizmos.DrawWireSphere(origin.position + offset + (origin.forward * wallCastDistance), checkRadius);
     }
 }

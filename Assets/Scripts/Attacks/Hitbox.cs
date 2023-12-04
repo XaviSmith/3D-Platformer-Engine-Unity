@@ -10,6 +10,7 @@ public class Hitbox : MonoBehaviour
     [SerializeField] float radius;
 
     [Header("Debug Settings")]
+    [SerializeField] bool drawHitbox = true;
     [SerializeField] Color32 inactiveColor = Color.red;
     [SerializeField] Color32 activeColor = Color.blue;
     [SerializeField] Color32 collidingColor = Color.green;
@@ -59,19 +60,24 @@ public class Hitbox : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        switch(colliderState)
+        if(drawHitbox)
         {
-            case ColliderState.INACTIVE: Gizmos.color = inactiveColor;
-                break;
-            case ColliderState.ACTIVE:
-                Gizmos.color = activeColor;
-                break;
-            case ColliderState.COLLIDING:
-                Gizmos.color = collidingColor;
-                break;
+            switch (colliderState)
+            {
+                case ColliderState.INACTIVE:
+                    Gizmos.color = inactiveColor;
+                    break;
+                case ColliderState.ACTIVE:
+                    Gizmos.color = activeColor;
+                    break;
+                case ColliderState.COLLIDING:
+                    Gizmos.color = collidingColor;
+                    break;
 
+            }
+            Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, transform.localScale);
+            Gizmos.DrawWireCube(Vector3.zero, new Vector3(hitboxSize.x * 2, hitboxSize.y * 2, hitboxSize.z * 2));
         }
-        Gizmos.matrix = Matrix4x4.TRS(transform.position, transform.rotation, transform.localScale);
-        Gizmos.DrawWireCube(Vector3.zero, new Vector3(hitboxSize.x * 2, hitboxSize.y * 2, hitboxSize.z * 2));
+        
     }
 }

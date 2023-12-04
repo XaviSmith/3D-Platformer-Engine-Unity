@@ -21,7 +21,8 @@ namespace Platformer
 
         [Header("Movement Settings")]
         [SerializeField] float moveSpeed = 6f;
-        [SerializeField] float airSpeed = 20f; //if we exceed this value, slow us down.
+        [SerializeField] float airAcceleration = 8f;
+        [SerializeField] float airMaxSpeed = 20f; //if we exceed this value, slow us down.
         [SerializeField] float rotationSpeed = 15f;
         [SerializeField] float smoothTime = 0.2f; //how fast the animator changes speed
 
@@ -43,6 +44,7 @@ namespace Platformer
         [SerializeField] float dashDuration = 0.5f;
         [SerializeField] float dashCooldown = 0.2f;
         [SerializeField] float dashForce = 10f;
+        [SerializeField] float dashJumpForce = 11f;
         bool isDashing = false;
 
         [Header("AirDash Settings")] //To dash we basically just multiply horizontal movespeed * dashVelocity
@@ -60,6 +62,7 @@ namespace Platformer
         float velocity; //output var for SmoothDamp
         float jumpVelocity;
         float dashVelocity = 1f;
+        float airDashVelocity = 1f;
 
         Vector3 movement; //taken from out input
 
@@ -160,6 +163,7 @@ namespace Platformer
             {
                 isDashing = true;
                 dashVelocity = dashForce;
+                airDashVelocity = airDashForce;
 
                 //Cancel jump so we can halt vertical momentum
                 if (jumpTimer.IsRunning)
@@ -298,7 +302,7 @@ namespace Platformer
 
             if(!jumpTimer.IsRunning)
             {
-                jumpVelocity += Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;         
+                jumpVelocity += Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;
             }
 
             //Apply the jump velocity
@@ -347,15 +351,17 @@ namespace Platformer
         public void HandleMovement()
         {
             //Have movement direction be relative to our camera's rotation around the y axis (vector3.up)
+            movement = Vector3.ProjectOnPlane(movement, groundChecker.CurrSlopeNormal);
             Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
+
             adjustedDirection = Vector3.ProjectOnPlane(adjustedDirection, groundChecker.CurrSlopeNormal);
-                   
-            HandleRotation(adjustedDirection);
+            
 
             //transform.rotation = Quaternion.LookRotation(Vector3.Cross(transform.right, groundChecker.currSlopeNormal));
 
             if (adjustedDirection.magnitude > 0)
-            {   
+            {
+                HandleRotation(adjustedDirection);
                 HandleHorizontalMovement(adjustedDirection);
                 SmoothSpeed(adjustedDirection.magnitude);
 
@@ -381,15 +387,29 @@ namespace Platformer
 
         void HandleRotation(Vector3 adjustedDirection)
         {
-            if(!groundChecker.IsGrounded)
+            if(!groundChecker.IsGrounded && !groundChecker.IsOnSlope)
             {
                 //transform.rotation= new Quaternion(0f, transform.rotation.y, transform.rotation.z, transform.rotation.w);
-                adjustedDirection = new Vector3(wallJumpTimer.IsRunning ? adjustedDirection.x : transform.forward.x, adjustedDirection.y, wallJumpTimer.IsRunning ? adjustedDirection.z : transform.forward.z);
+                //adjustedDirection = new Vector3(wallJumpTimer.IsRunning ? adjustedDirection.x : transform.forward.x, adjustedDirection.y, wallJumpTimer.IsRunning ? adjustedDirection.z : transform.forward.z);
+                //transform.LookAt(transform.position + adjustedDirection);
+                //return;
             } 
 
-            //Quaternion targetRotation = Quaternion.LookRotation(adjustedDirection);
-            //transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-            transform.LookAt(transform.position + adjustedDirection); //Have player look where they're going
+
+            Quaternion targetRotation = Quaternion.FromToRotation(transform.position, transform.position + adjustedDirection);
+
+            if(wallJumpTimer.IsRunning)
+            {
+                transform.LookAt(transform.position + adjustedDirection); //Have player look where they're going
+            } else
+            {
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(adjustedDirection), rotationSpeed * Time.deltaTime);
+            }
+
+            
+            
+
+            //transform.LookAt(transform.position + adjustedDirection); //Have player look where they're going
         }
 
         //Move the player
@@ -399,19 +419,31 @@ namespace Platformer
             {
                 HandleAirMovement(adjustedDirection);
                 return;
+            } else
+            {
+                if(!dashTimer.IsRunning)
+                {
+                    airDashVelocity = 1f;
+                }
+                
             }
-
-            Vector3 velocity = adjustedDirection * moveSpeed * dashVelocity * Time.fixedDeltaTime;
+           
             rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
         }
 
         void HandleAirMovement(Vector3 adjustedDirection)
         {
+            float speedChange = airAcceleration * Time.deltaTime;
             //If we're above airspeed slow us down, otherwise speed us up.
-            float targetSpeed = new Vector2(rb.velocity.x, rb.velocity.z).magnitude < airSpeed ? airSpeed : -airSpeed;
+            //float targetSpeed = new Vector2(rb.velocity.x, rb.velocity.z).magnitude < airMaxSpeed ? airMaxSpeed : -airMaxSpeed;
+            
+            Vector3 velocity = adjustedDirection * airMaxSpeed * airDashVelocity * Time.fixedDeltaTime;
+            velocity.x = Mathf.MoveTowards(rb.velocity.x, velocity.x, speedChange);
+            velocity.y = rb.velocity.y;
+            velocity.z = Mathf.MoveTowards(rb.velocity.z, velocity.z, speedChange);
 
-            Vector3 velocity = adjustedDirection * airSpeed * Time.fixedDeltaTime;
-            rb.velocity += new Vector3(velocity.x, 0f, velocity.z);
+            //rb.velocity += new Vector3(velocity.x, 0f, velocity.z);
+            rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
         }
 
         public void HaltVerticalAirMomentum() //For airdashes since we don't want to rise or fall

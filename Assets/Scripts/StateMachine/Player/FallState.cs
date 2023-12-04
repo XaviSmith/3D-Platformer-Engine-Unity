@@ -11,7 +11,7 @@ public class FallState : BaseState
     public override void OnEnter()
     {
         base.OnEnter();
-        animator.CrossFade(JumpHash, CROSSFADEDURATION);
+        animator.CrossFade(FallHash, CROSSFADEDURATION);
     }
 
     public override void FixedUpdate()

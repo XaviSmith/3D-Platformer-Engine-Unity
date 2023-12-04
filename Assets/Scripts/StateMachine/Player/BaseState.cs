@@ -31,7 +31,7 @@ public abstract class BaseState : IState
 
     public virtual void OnEnter()
     {
-        //Debug.Log(this.GetType().Name + ".OnEnter");
+        Debug.Log(this.GetType().Name + ".OnEnter");
     }
 
     public virtual void Update()

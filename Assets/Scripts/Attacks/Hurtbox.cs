@@ -11,6 +11,7 @@ public class Hurtbox : MonoBehaviour
     [SerializeField] float damageCooldown;
 
     [Header("Debug Settings")]
+    [SerializeField] bool drawHurtbox = true;
     [SerializeField] Color32 inactiveColor;
     [SerializeField] Color32 activeColor;
     [SerializeField] Color32 collidingColor;
@@ -44,20 +45,24 @@ public class Hurtbox : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        switch (colliderState)
+        if(drawHurtbox)
         {
-            case ColliderState.INACTIVE:
-                Gizmos.color = inactiveColor;
-                break;
-            case ColliderState.ACTIVE:
-                Gizmos.color = activeColor;
-                break;
-            case ColliderState.COLLIDING:
-                Gizmos.color = collidingColor;
-                break;
+            switch (colliderState)
+            {
+                case ColliderState.INACTIVE:
+                    Gizmos.color = inactiveColor;
+                    break;
+                case ColliderState.ACTIVE:
+                    Gizmos.color = activeColor;
+                    break;
+                case ColliderState.COLLIDING:
+                    Gizmos.color = collidingColor;
+                    break;
 
+            }
+            Gizmos.DrawWireCube(_collider.bounds.center, _collider.bounds.size);
         }
-        Gizmos.DrawWireCube(_collider.bounds.center, _collider.bounds.size);
+        
     }
 
 

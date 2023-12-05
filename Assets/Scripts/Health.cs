@@ -5,7 +5,6 @@ using UnityEngine;
 public class Health : MonoBehaviour
 {
     [SerializeField] int maxHealth = 100;
-    [SerializeField] FloatEventChannel playerHealthChannel;
 
     [SerializeField]int currentHealth; //viewable for debugging
 
@@ -18,20 +17,14 @@ public class Health : MonoBehaviour
 
     void OnEnable()
     {
-        EventManager.StartListening(Events.TEST.ToString(), Test);
         EventManager<int>.StartListening(Events.DAMAGE.ToString(), TakeDamage);
     }
 
     void OnDisable()
     {
-        EventManager.StopListening(Events.TEST.ToString(), Test);
         EventManager<int>.StopListening(Events.DAMAGE.ToString(), TakeDamage);
     }
 
-    public void Test()
-    {
-        Debug.Log("TEST CALLED");
-    }
 
     void Start()
     {
@@ -48,14 +41,6 @@ public class Health : MonoBehaviour
     {
         currentHealth -= damage;
         UpdateHealth();
-    }
-
-    void PublishHealthPercentage()
-    {
-        if(playerHealthChannel != null)
-        {
-            playerHealthChannel.Invoke(currentHealth / (float) maxHealth);
-        }
     }
 
     void UpdateHealth()

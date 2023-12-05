@@ -17,7 +17,7 @@ public class FallState : BaseState
     public override void FixedUpdate()
     {
         player.HandleMovement();
-        player.HandleJump();
+        player.HandleVerticalMovement();
     }
 
 }

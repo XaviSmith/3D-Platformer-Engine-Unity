@@ -20,6 +20,10 @@ namespace Platformer
         float currSlopeAngle;      
         RaycastHit slopeRaycast;
 
+        [Header("Ground Snapping")]
+        [SerializeField] float snapCastDistance = 0.1f;
+        [SerializeField]public float TimeSinceLastGrounded { get; set; } = 0;
+        public bool ShouldSnapToGround { get; set; } = false;
         public bool IsGrounded { get; set; }
         public bool IsOnSlope { get; set; }
         public Vector3 CurrSlopeNormal { get; set; }
@@ -63,11 +67,39 @@ namespace Platformer
             }
         }
 
+        bool SnapToGround()
+        {
+            return IsOnSlope && !IsGrounded;
+            /*
+            if (FramesSinceLastGrounded > 5)
+            {
+                return false;
+            }
+
+            if(!Physics.Raycast(transform.position - CurrOffset, Vector3.down, out RaycastHit hit, snapCastDistance, groundLayers))
+            {
+                return false;
+            }
+
+            //Maybe remove this
+            if(hit.normal.y < minSlopeAngle)
+            {
+                return false;
+            }
+
+            currSlopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+            IsGrounded = true;
+            return true;
+            */
+        }
+
         // Update is called once per frame
         void Update()
         {
             IsGrounded = CheckSphereCast();
             IsOnSlope = CheckSlope();
+            ShouldSnapToGround = SnapToGround();
+            TimeSinceLastGrounded = IsGrounded || ShouldSnapToGround ? 0 : TimeSinceLastGrounded + Time.deltaTime;
         }
 
         //For Debugging the spherecast and slopeCast. SphereCast casts up to wherever the blue line is with volume as the sphere.

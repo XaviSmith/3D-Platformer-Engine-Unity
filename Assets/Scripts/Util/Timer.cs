@@ -1,3 +1,5 @@
+//Written from git-amend's platformer tutorial.
+
 using System;
 using System.Collections;
 using System.Collections.Generic;

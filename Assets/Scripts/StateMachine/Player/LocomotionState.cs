@@ -11,10 +11,23 @@ public class LocomotionState : BaseState
     {
         base.OnEnter();
         animator.CrossFade(LocomotionHash, CROSSFADEDURATION);
+        player.CheckJumpBuffer();
+    }
+
+    public override void Update()
+    {
+        player.CheckCoyoteTime();
+        base.Update();
     }
 
     public override void FixedUpdate()
     {
         player.HandleMovement();
+    }
+
+    public override void OnExit()
+    {
+        base.OnExit();
+        //player.StopCoyoteTime();
     }
 }

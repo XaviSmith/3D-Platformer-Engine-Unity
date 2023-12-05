@@ -13,7 +13,6 @@ namespace Platformer
             if(other.CompareTag("Player"))
             {
                 EventManager<int>.TriggerEvent(Events.UPDATESCORE.ToString(), score);
-                EventManager.TriggerEvent(Events.TEST.ToString());
                 Destroy(gameObject);
             }
         }

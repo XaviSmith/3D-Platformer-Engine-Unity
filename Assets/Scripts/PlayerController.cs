@@ -32,7 +32,8 @@ namespace Platformer
         [SerializeField] float jumpCooldown = 0f;
         //[SerializeField] float jumpMaxHeight = 2f;
         [SerializeField] float gravityMultiplier = 1f; //for if we want to bring them to the ground faster or slower. NOTE: It's generally better to change the overall gravity for tweaks since this won't affect speed falling off a platform     
-        bool isFalling = false;
+        [SerializeField] float coyoteTime = 0.2f;
+        [SerializeField] float jumpBuffer = 0.5f;
 
         [Header("Wall Jump Settings")]
         [SerializeField] float wallSlideSpeed = 1f;
@@ -70,6 +71,8 @@ namespace Platformer
 
         CountdownTimer jumpTimer;
         CountdownTimer jumpCooldownTimer; //if we want a cooldown on how long after landing before we can jump again.
+        CountdownTimer coyoteTimer;
+        CountdownTimer jumpBufferTimer;
 
         CountdownTimer wallJumpTimer;
 
@@ -124,10 +127,10 @@ namespace Platformer
             AttackState attackState = new AttackState(this, animator);
 
             //Define transitions
-            AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
+            AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning || jumpBufferTimer.IsRunning));
             AddTransition(locomotionState, attackState, new FuncPredicate(() => baseAttack.IsRunning));
             AddTransition(locomotionState, dashState, new FuncPredicate(() => groundChecker.IsGrounded && dashTimer.IsRunning));
-            AddTransition(locomotionState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddTransition(locomotionState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !groundChecker.ShouldSnapToGround && !groundChecker.IsOnSlope && groundChecker.TimeSinceLastGrounded >= coyoteTime && !jumpTimer.IsRunning &&  !dashTimer.IsRunning));
             AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
             AddTransition(jumpState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             AddTransition(fallState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && jumpVelocity <= 0f && !wallJumpTimer.IsRunning));
@@ -151,14 +154,38 @@ namespace Platformer
             //Setup timers
             jumpTimer = new CountdownTimer(jumpDuration);
             jumpCooldownTimer = new CountdownTimer(jumpCooldown);
+            coyoteTimer = new CountdownTimer(coyoteTime);
+            jumpBufferTimer = new CountdownTimer(jumpBuffer);
             dashTimer = new CountdownTimer(dashDuration);
             dashCooldownTimer = new CountdownTimer(dashCooldown);
             wallJumpTimer = new CountdownTimer(wallJumpCooldown);
 
-            jumpTimer.OnTimerStart += () => jumpVelocity = jumpForce; //whenever timer starts we start out with jumpForce
-            jumpTimer.OnTimerStop += () => jumpCooldownTimer.Start(); //For if we want a cooldown on how long after landing we want to be able to jump again.
+            jumpTimer.OnTimerStart += () =>
+            {
+                if(coyoteTimer.IsRunning)
+                {
+                    coyoteTimer.Stop();
+                }
+
+                if(jumpBufferTimer.IsRunning)
+                {
+                    jumpBufferTimer.Stop();
+                }
+                
+                jumpVelocity = jumpForce; //whenever timer starts we start out with jumpForce            
+            };
+            jumpTimer.OnTimerStop += () =>
+            {
+                jumpCooldownTimer.Start(); //For if we want a cooldown on how long after landing we want to be able to jump again.
+            };
+
+            //Debugs for if coyote time starts acting weird
+
+            //coyoteTimer.OnTimerStart += () => Debug.Log("COYOTE TIME STARTED");
+            //coyoteTimer.OnTimerStop += () => Debug.Log("COYOTE TIME STOPPED");
 
             wallJumpTimer.OnTimerStop += () => jumpVelocity = 0f;
+
             dashTimer.OnTimerStart += () =>
             {
                 isDashing = true;
@@ -180,7 +207,7 @@ namespace Platformer
             };
 
 
-            timers = new List<Timer>(5) { jumpTimer, jumpCooldownTimer, wallJumpTimer, dashTimer, dashCooldownTimer}; //defining capacity for some optimization;
+            timers = new List<Timer>(7) { jumpTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer ,wallJumpTimer, dashTimer, dashCooldownTimer}; //defining capacity for some optimization;
         }
         //*****************************Jumping (also see HandleJump lower down)*****************************
 
@@ -200,12 +227,24 @@ namespace Platformer
 
         void OnJump(bool performed)
         {
-            if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && groundChecker.IsGrounded)
+            if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && (groundChecker.IsGrounded || coyoteTimer.IsRunning))
             {
                 jumpTimer.Start();
-            } else if(!performed && jumpTimer.IsRunning) //We let go of the jump button early, shorthop
+            } else if(!performed) //We let go of the jump button early, shorthop
             {
                 jumpTimer.Stop();
+            }
+
+            if (performed && !jumpTimer.IsRunning)
+            {
+                if(jumpBufferTimer.IsRunning)
+                {
+                    jumpBufferTimer.Reset();
+                } else
+                {
+                    jumpBufferTimer.Start();
+                }
+                
             }
 
             if(performed && !wallJumpTimer.IsRunning && wallJumpChecker.IsTouchingWall && !groundChecker.IsGrounded)
@@ -290,19 +329,56 @@ namespace Platformer
             animator.SetFloat(JumpVelocity, jumpVelocity);
         }
 
-        //Jump has an initial burst of vertical speed, then apply less velocity over time, then let gravity take over.
-        public void HandleJump()
+        public void CheckCoyoteTime()
         {
-            // If we're on the ground and not jumping, keep jump velocity at 0
-            if(!jumpTimer.IsRunning && groundChecker.IsGrounded)
+            if(coyoteTimer.IsRunning)
             {
-                jumpVelocity = 0f;
-                return;
+                HandleVerticalMovement();
             }
 
+            if(!groundChecker.IsGrounded && !groundChecker.IsOnSlope && !jumpTimer.IsRunning && !coyoteTimer.IsRunning)
+            {
+                coyoteTimer.Start();
+            }
+
+            if(coyoteTimer.IsRunning && (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !jumpTimer.IsRunning)
+            {
+                coyoteTimer.Stop();
+            }
+        }
+
+        //Shouldn't be called in normal play, but good to have a fallback
+        /*public void StopCoyoteTime()
+        {
+            if(coyoteTimer.IsRunning)
+            {
+                coyoteTimer.Stop();
+                Debug.LogWarning("Stop coyote time should not have been called here. Check your states!");
+            }
+            
+        }*/
+
+        public void CheckJumpBuffer()
+        {
+            if(jumpBufferTimer.IsRunning)
+            {
+                jumpTimer.Start();
+                jumpBufferTimer.Stop();
+            }
+        }
+
+        //Jump has an initial burst of vertical speed, then apply less velocity over time, then let gravity take over.
+        public void HandleVerticalMovement()
+        {        
             if(!jumpTimer.IsRunning)
             {
-                jumpVelocity += Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;
+                if (groundChecker.IsGrounded || coyoteTimer.IsRunning)
+                {
+                    jumpVelocity = 0f;
+                } else //falling
+                {
+                    jumpVelocity += Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;
+                }             
             }
 
             //Apply the jump velocity
@@ -428,6 +504,8 @@ namespace Platformer
                 
             }
            
+            if(groundChecker.ShouldSnapToGround) { Debug.Log("SNAPPING"); }
+            Vector3 velocity = adjustedDirection * moveSpeed * (groundChecker.ShouldSnapToGround ? (-transform.up * 2f).y : 1f) * dashVelocity * Time.fixedDeltaTime;
             rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
         }
 

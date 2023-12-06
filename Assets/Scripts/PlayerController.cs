@@ -46,16 +46,16 @@ namespace Platformer
         [SerializeField] float dashCooldown = 0.2f;
         [SerializeField] float dashForce = 10f;
         [SerializeField] float dashJumpForce = 11f;
-        bool isDashing = false;
 
         [Header("AirDash Settings")] //To dash we basically just multiply horizontal movespeed * dashVelocity
         [SerializeField] float airDashDuration = 0.25f;
         [SerializeField] float airDashForce = 10f;
-        bool isAirDashing = false;
 
         [Header("Attacks")]
         [SerializeField] BaseAttack baseAttack;
-        [SerializeField] SlideAttack slideAttack;
+        [SerializeField] SlideAttack dashAttack;
+        [SerializeField] BaseAttack diveAttack;
+
 
         [SerializeField] Transform mainCam; //The camera we use to determine our relative movement
 
@@ -63,6 +63,7 @@ namespace Platformer
         float velocity; //output var for SmoothDamp
         float jumpVelocity;
         float dashVelocity = 1f;
+        float dashJumpVelocity = 1f;
         float airDashVelocity = 1f;
 
         Vector3 movement; //taken from out input
@@ -82,7 +83,10 @@ namespace Platformer
         CountdownTimer airDashTimer;
         CountdownTimer airDashCooldownTimer;
 
+        //State Machine stuff
         StateMachine stateMachine;
+        bool ShouldFall => !groundChecker.IsGrounded && !groundChecker.ShouldSnapToGround && !groundChecker.IsOnSlope && groundChecker.TimeSinceLastGrounded >= coyoteTime && !jumpTimer.IsRunning && !dashTimer.IsRunning;
+       
         //State Machine Helper methods, consider just moving this into the stateMachine class.
         void AddTransition(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
         void AddAnyTransition(IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
@@ -125,21 +129,26 @@ namespace Platformer
             DashState dashState = new DashState(this, animator);
             DashJumpState dashJumpState = new DashJumpState(this, animator);
             AttackState attackState = new AttackState(this, animator);
+            DiveState diveState = new DiveState(this, animator);
 
             //Define transitions
             AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning || jumpBufferTimer.IsRunning));
             AddTransition(locomotionState, attackState, new FuncPredicate(() => baseAttack.IsRunning));
             AddTransition(locomotionState, dashState, new FuncPredicate(() => groundChecker.IsGrounded && dashTimer.IsRunning));
-            AddTransition(locomotionState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !groundChecker.ShouldSnapToGround && !groundChecker.IsOnSlope && groundChecker.TimeSinceLastGrounded >= coyoteTime && !jumpTimer.IsRunning &&  !dashTimer.IsRunning));
+            AddTransition(locomotionState, fallState, new FuncPredicate(() => ShouldFall));
             AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
             AddTransition(jumpState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
             AddTransition(fallState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && jumpVelocity <= 0f && !wallJumpTimer.IsRunning));
+            AddTransition(fallState, diveState, new FuncPredicate(() => diveAttack.IsRunning));
+            AddTransition(diveState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
             AddTransition(wallSlideState, wallJumpState, new FuncPredicate(() => !groundChecker.IsGrounded && wallJumpTimer.IsRunning));
             AddTransition(wallSlideState, fallState, new FuncPredicate(() => !wallJumpTimer.IsRunning && !wallJumpChecker.IsTouchingWall));
             AddTransition(wallJumpState, fallState, new FuncPredicate(() => !jumpTimer.IsRunning && !wallJumpTimer.IsRunning));
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, dashJumpState, new FuncPredicate(() => jumpTimer.IsRunning && dashTimer.IsRunning));
+            AddTransition(dashJumpState, diveState, new FuncPredicate(() => diveAttack.IsRunning));
+            AddTransition(dashJumpState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
             AddTransition(attackState, locomotionState, new FuncPredicate(() => !baseAttack.IsRunning));
 
             AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !dashTimer.IsRunning));
@@ -188,9 +197,7 @@ namespace Platformer
 
             dashTimer.OnTimerStart += () =>
             {
-                isDashing = true;
                 dashVelocity = dashForce;
-                airDashVelocity = airDashForce;
 
                 //Cancel jump so we can halt vertical momentum
                 if (jumpTimer.IsRunning)
@@ -202,7 +209,6 @@ namespace Platformer
             dashTimer.OnTimerStop += () =>
             {
                 dashVelocity = 1f;
-                isDashing = false;
                 dashCooldownTimer.Start();
             };
 
@@ -255,12 +261,12 @@ namespace Platformer
 
         void OnDash(bool performed)
         {
-            if(!isDashing)
+            if(!dashTimer.IsRunning)
             {
-                if (performed && groundChecker.IsGrounded && !dashTimer.IsRunning && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
+                if (performed && groundChecker.IsGrounded && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
                 {
                     dashTimer.Start();
-                    slideAttack.StartAttackTimer();
+                    dashAttack.StartAttackTimer();
                 } 
             }
             
@@ -275,9 +281,9 @@ namespace Platformer
             }     
             
             //air Attack
-            if(!groundChecker.IsGrounded)
+            if(ShouldFall)
             {
-
+                diveAttack.StartAttackTimer();
             }
         }
 
@@ -287,9 +293,32 @@ namespace Platformer
             baseAttack.Attack(); //Called when we enter the Attack State to actually attack.
         }
 
-        public void SlideAttack()
+        public void DashAttack()
         {
-            slideAttack.Attack();
+            dashAttack.Attack();
+        }
+
+
+        public void StartDive()
+        {
+            airDashVelocity = airDashForce;
+            transform.LookAt(transform.position + (Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement));
+            diveAttack.Attack();
+        }
+
+        public void ResetDiveVelocity()
+        {
+            airDashVelocity = 1f;
+        }
+
+        public void StartDashJump()
+        {
+            dashJumpVelocity = dashJumpForce;
+        }
+
+        public void ResetDashJumpVelocity()
+        {
+            dashJumpVelocity = 1f;
         }
 
         //**********************************************************************
@@ -416,18 +445,21 @@ namespace Platformer
 
             //Apply the jump velocity
             rb.velocity = new Vector3(rb.velocity.x, jumpVelocity, rb.velocity.z);
-            dashVelocity = dashForce;
 
+        }   
+
+        public void HandleDive()
+        {
+            //Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * new Vector3(1, 0, 1);
+            HandleAirMovement(transform.forward);
         }
-
 
         //*************************Movement*************************************
 
-        //Called by LocomotionState and JumpState
         public void HandleMovement()
         {
             //Have movement direction be relative to our camera's rotation around the y axis (vector3.up)
-            movement = Vector3.ProjectOnPlane(movement, groundChecker.CurrSlopeNormal);
+            //movement = Vector3.ProjectOnPlane(movement, groundChecker.CurrSlopeNormal);
             Vector3 adjustedDirection = Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement;
 
             adjustedDirection = Vector3.ProjectOnPlane(adjustedDirection, groundChecker.CurrSlopeNormal);
@@ -455,12 +487,7 @@ namespace Platformer
         {
             currSpeed = Mathf.SmoothDamp(currSpeed, targetSpeed, ref velocity, smoothTime);
         }
-
-        public void ResetDashVelocity()
-        {
-            dashVelocity = 1f;
-        }
-
+      
         void HandleRotation(Vector3 adjustedDirection)
         {
             if(!groundChecker.IsGrounded && !groundChecker.IsOnSlope)
@@ -495,13 +522,6 @@ namespace Platformer
             {
                 HandleAirMovement(adjustedDirection);
                 return;
-            } else
-            {
-                if(!dashTimer.IsRunning)
-                {
-                    airDashVelocity = 1f;
-                }
-                
             }
            
             if(groundChecker.ShouldSnapToGround) { Debug.Log("SNAPPING"); }
@@ -511,11 +531,11 @@ namespace Platformer
 
         void HandleAirMovement(Vector3 adjustedDirection)
         {
-            float speedChange = airAcceleration * Time.deltaTime;
+            float speedChange = airAcceleration * airDashVelocity * Time.deltaTime;
             //If we're above airspeed slow us down, otherwise speed us up.
             //float targetSpeed = new Vector2(rb.velocity.x, rb.velocity.z).magnitude < airMaxSpeed ? airMaxSpeed : -airMaxSpeed;
-            
-            Vector3 velocity = adjustedDirection * airMaxSpeed * airDashVelocity * Time.fixedDeltaTime;
+
+            Vector3 velocity = adjustedDirection * airMaxSpeed * airDashVelocity * dashJumpVelocity * Time.fixedDeltaTime;
             velocity.x = Mathf.MoveTowards(rb.velocity.x, velocity.x, speedChange);
             velocity.y = rb.velocity.y;
             velocity.z = Mathf.MoveTowards(rb.velocity.z, velocity.z, speedChange);

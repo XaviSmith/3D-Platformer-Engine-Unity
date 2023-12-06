@@ -3,28 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using Platformer;
 
-public class DashJumpState : BaseState
+public class DiveState : BaseState
 {
-    public DashJumpState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
+    public DiveState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
 
     //On Enter start the jump animation
     public override void OnEnter()
     {
         base.OnEnter();
-        animator.CrossFade(JumpHash, CROSSFADEDURATION);
-        player.StartDashJump();
+        animator.CrossFade(DiveHash, CROSSFADEDURATION);
+        player.StartDive();
     }
 
     public override void OnExit()
     {
         base.OnExit();
-        player.ResetDashJumpVelocity();
+        player.ResetDiveVelocity();
     }
 
     public override void FixedUpdate()
     {
         //call Player's jump logic and move logic
-        player.HandleDashJump();
-        player.HandleMovement();
+        player.HandleDive();
     }
 }

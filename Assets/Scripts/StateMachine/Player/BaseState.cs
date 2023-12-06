@@ -16,6 +16,7 @@ public abstract class BaseState : IState
     protected static readonly int LocomotionHash = Animator.StringToHash("Locomotion");
     protected static readonly int JumpHash = Animator.StringToHash("Jump");
     protected static readonly int DiveHash = Animator.StringToHash("Dive");
+    protected static readonly int DiveLandHash = Animator.StringToHash("DiveLand");
     protected static readonly int FallHash = Animator.StringToHash("Fall");
     protected static readonly int WallSlideHash = Animator.StringToHash("WallStick");
     protected static readonly int WallJumpHash = Animator.StringToHash("Jump");

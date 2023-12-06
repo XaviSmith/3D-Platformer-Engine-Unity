@@ -11,6 +11,7 @@ public class WallSlideState : BaseState
     {
         base.OnEnter();
         animator.CrossFade(WallSlideHash, CROSSFADEDURATION);
+        player.SetDiveFlag(false);
     }
 
     public override void FixedUpdate()

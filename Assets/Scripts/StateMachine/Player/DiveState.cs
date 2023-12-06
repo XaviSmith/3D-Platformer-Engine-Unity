@@ -25,5 +25,6 @@ public class DiveState : BaseState
     {
         //call Player's jump logic and move logic
         player.HandleDive();
+        player.HandleVerticalMovement();
     }
 }

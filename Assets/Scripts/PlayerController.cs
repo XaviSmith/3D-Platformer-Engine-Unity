@@ -48,8 +48,10 @@ namespace Platformer
         [SerializeField] float dashJumpForce = 11f;
 
         [Header("AirDash Settings")] //To dash we basically just multiply horizontal movespeed * dashVelocity
-        [SerializeField] float airDashDuration = 0.25f;
-        [SerializeField] float airDashForce = 10f;
+        [SerializeField] float airDashLiftForce = 5f; //for the initial part
+        [SerializeField] float airDashLiftTime = 0.1f;
+        [SerializeField] Vector2 airDashForce = new Vector2(10f, -2f); //x axis is horizontal movement, y axis is vertical movement
+
 
         [Header("Attacks")]
         [SerializeField] BaseAttack baseAttack;
@@ -64,7 +66,7 @@ namespace Platformer
         float jumpVelocity;
         float dashVelocity = 1f;
         float dashJumpVelocity = 1f;
-        float airDashVelocity = 1f;
+        Vector2 airDashVelocity = new Vector2(1f, 0f);
 
         Vector3 movement; //taken from out input
 
@@ -81,7 +83,7 @@ namespace Platformer
         CountdownTimer dashCooldownTimer;
 
         CountdownTimer airDashTimer;
-        CountdownTimer airDashCooldownTimer;
+        CountdownTimer airDashLiftTimer;
 
         //State Machine stuff
         StateMachine stateMachine;
@@ -166,6 +168,7 @@ namespace Platformer
             coyoteTimer = new CountdownTimer(coyoteTime);
             jumpBufferTimer = new CountdownTimer(jumpBuffer);
             dashTimer = new CountdownTimer(dashDuration);
+            airDashLiftTimer = new CountdownTimer(airDashLiftTime);
             dashCooldownTimer = new CountdownTimer(dashCooldown);
             wallJumpTimer = new CountdownTimer(wallJumpCooldown);
 
@@ -183,6 +186,7 @@ namespace Platformer
                 
                 jumpVelocity = jumpForce; //whenever timer starts we start out with jumpForce            
             };
+
             jumpTimer.OnTimerStop += () =>
             {
                 jumpCooldownTimer.Start(); //For if we want a cooldown on how long after landing we want to be able to jump again.
@@ -213,7 +217,7 @@ namespace Platformer
             };
 
 
-            timers = new List<Timer>(7) { jumpTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer ,wallJumpTimer, dashTimer, dashCooldownTimer}; //defining capacity for some optimization;
+            timers = new List<Timer>(8) { jumpTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer ,wallJumpTimer, dashTimer, airDashLiftTimer, dashCooldownTimer}; //defining capacity for some optimization;
         }
         //*****************************Jumping (also see HandleJump lower down)*****************************
 
@@ -302,13 +306,15 @@ namespace Platformer
         public void StartDive()
         {
             airDashVelocity = airDashForce;
+            airDashLiftTimer.Start();
+
             transform.LookAt(transform.position + (Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement));
             diveAttack.Attack();
         }
 
         public void ResetDiveVelocity()
         {
-            airDashVelocity = 1f;
+            airDashVelocity = new Vector2(1f,0f);
         }
 
         public void StartDashJump()
@@ -404,9 +410,14 @@ namespace Platformer
                 if (groundChecker.IsGrounded || coyoteTimer.IsRunning)
                 {
                     jumpVelocity = 0f;
-                } else //falling
+                }
+                else if(airDashLiftTimer.IsRunning && !groundChecker.IsGrounded) //beginning part of an airDash where we lift off a little
                 {
-                    jumpVelocity += Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;
+                    jumpVelocity = airDashLiftForce;
+                }
+                else //falling
+                {
+                    jumpVelocity += airDashVelocity.y + Physics.gravity.y * gravityMultiplier * Time.fixedDeltaTime;
                 }             
             }
 
@@ -509,9 +520,6 @@ namespace Platformer
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(adjustedDirection), rotationSpeed * Time.deltaTime);
             }
 
-            
-            
-
             //transform.LookAt(transform.position + adjustedDirection); //Have player look where they're going
         }
 
@@ -531,13 +539,12 @@ namespace Platformer
 
         void HandleAirMovement(Vector3 adjustedDirection)
         {
-            float speedChange = airAcceleration * airDashVelocity * Time.deltaTime;
+            float speedChange = airAcceleration * airDashVelocity.x * Time.deltaTime;
             //If we're above airspeed slow us down, otherwise speed us up.
             //float targetSpeed = new Vector2(rb.velocity.x, rb.velocity.z).magnitude < airMaxSpeed ? airMaxSpeed : -airMaxSpeed;
 
-            Vector3 velocity = adjustedDirection * airMaxSpeed * airDashVelocity * dashJumpVelocity * Time.fixedDeltaTime;
+            Vector3 velocity = adjustedDirection * airMaxSpeed * airDashVelocity.x * dashJumpVelocity * Time.fixedDeltaTime;
             velocity.x = Mathf.MoveTowards(rb.velocity.x, velocity.x, speedChange);
-            velocity.y = rb.velocity.y;
             velocity.z = Mathf.MoveTowards(rb.velocity.z, velocity.z, speedChange);
 
             //rb.velocity += new Vector3(velocity.x, 0f, velocity.z);

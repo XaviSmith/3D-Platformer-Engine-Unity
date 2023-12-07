@@ -10,7 +10,8 @@ public class Enums { }
         TEST,
         DAMAGE,
         UPDATEPLAYERHEALTH,
-        UPDATESCORE
+        UPDATESCORE,
+        PLAYERDIE
     }
 
 [System.Serializable]

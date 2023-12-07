@@ -11,6 +11,12 @@ namespace Platformer
     public class PlatformCollisionHandler : MonoBehaviour
     {
         Transform platform;
+        Vector3 scale; //to prevent any weirdness with platforms rescaling us
+
+        private void OnEnable()
+        {
+            scale = transform.localScale;
+        }
 
         private void OnCollisionEnter(Collision other)
         {
@@ -33,6 +39,7 @@ namespace Platformer
             if(other.gameObject.CompareTag("MovingPlatform"))
             {
                 transform.SetParent(null);
+                transform.localScale = scale;
                 platform = null;
             }
         }

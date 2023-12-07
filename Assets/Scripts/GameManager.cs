@@ -10,6 +10,8 @@ namespace Platformer
         List<PlayerManager> Players { get; set; } = new List<PlayerManager>();
         public Transform MainPlayer { get; private set; }
         public int Score { get; private set; }
+        public int StarCount { get; private set; }
+        public int CoinCount { get; private set; }
 
         void Awake()
         {
@@ -39,12 +41,25 @@ namespace Platformer
         private void OnEnable()
         {
             //EventManager<int>.StartListening(Events.UPDATESCORE.ToString(), AddScore);
+            EventManager<int>.StartListening(Events.GETSTAR.ToString(), GetStar);
+            EventManager<int>.StartListening(Events.GETCOIN.ToString(), GetCoin);
         }
 
         public void AddScore(int score)
         {
-            Debug.Log("Adding " + score + " to score.");
             Score += score;
+        }
+
+        public void GetStar(int val)
+        {
+            StarCount += val;
+            EventManager<int>.TriggerEvent(Events.UPDATESTAR.ToString(), StarCount);
+        }
+
+        public void GetCoin(int val)
+        {
+            CoinCount += val;
+            EventManager<int>.TriggerEvent(Events.UPDATECOIN.ToString(), CoinCount);
         }
     }
 

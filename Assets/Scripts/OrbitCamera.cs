@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Utils;
 
 //Based on tutorial here: https://catlikecoding.com/unity/tutorials/movement/orbit-camera/ 
 
@@ -15,6 +16,8 @@ namespace Platformer
         [SerializeField] InputReader input;
         [SerializeField] Transform target;
         Vector3 targetPosition;
+        [Header("Settings")]
+        [SerializeField] float realignTime = 0.2f; //how long do we take to realign the camera for auto-aligns
         [SerializeField] Vector3 offset;
         [SerializeField, Range(1f, 200f)] float distance;
         [SerializeField, Min(0f)] float focusRadius = 1f; //How much can the player move before we move the cam with them
@@ -30,11 +33,15 @@ namespace Platformer
         [SerializeField, Range(-89f, 89f)] float minVerticalAngle = -30f; 
         [SerializeField, Range(-89f, 89f)] float maxVerticalAngle = 60f;
         const float DeadZone = 0.001f;
+        Vector2 defaultOrientation = new Vector2();
 
         Camera _camera;
         
         bool isRotatingCamera = false;
+        bool isResetting = false;
         float lastManualRotationTime;
+
+        CountdownTimer realignTimer;
 
         //mouse input
         bool isRMBPressed; //right mouse button;
@@ -58,6 +65,7 @@ namespace Platformer
             focusPoint = targetPosition;
             transform.localRotation = Quaternion.Euler(camOrientation);
             ClampAngles();
+            defaultOrientation = camOrientation;
         }
 
         //Editor only function
@@ -75,14 +83,19 @@ namespace Platformer
             //set our InputReader functions
             input.EnableMouseControlCamera += OnEnableMouseControlCamera;
             input.DisableMouseControlCamera += OnDisableMouseControlCamera;
-            input.ResetCamera += ResetCam;
+            input.ResetCamera += OnResetCamera;
         }
 
         void OnDisable()
         {
             input.EnableMouseControlCamera -= OnEnableMouseControlCamera;
             input.DisableMouseControlCamera -= OnDisableMouseControlCamera;
-            input.ResetCamera -= ResetCam;
+            input.ResetCamera -= OnResetCamera;
+        }
+
+        void Start()
+        {
+            realignTimer = new CountdownTimer(realignTime);
         }
 
         void OnEnableMouseControlCamera()
@@ -107,6 +120,17 @@ namespace Platformer
             StartCoroutine(DisableMouseForFrame()); //disable mouse for 1 frame to prevent weirdness
         }
 
+        void OnResetCamera()
+        {           
+            if (!realignTimer.IsRunning)
+            {
+                isResetting = true;
+                realignTimer.Start();
+                ResetCam();
+            }
+            
+        }
+
         IEnumerator DisableMouseForFrame()
         {
             cameraMovementLock = true;
@@ -119,16 +143,36 @@ namespace Platformer
         //Reset Camera to behind the Player.
         void ResetCam()
         {
-            transform.SetPositionAndRotation(transform.position, Quaternion.Euler(transform.eulerAngles.x, target.transform.eulerAngles.y, transform.eulerAngles.z));
+            if(!realignTimer.IsRunning)
+            {
+                isResetting = false;
+                return;
+            }
+
+            Debug.Log("PROGRESS: " + realignTimer.Progress);
+            //Vector3 targetAlign = Quaternion.Euler(transform.eulerAngles.x, target.transform.eulerAngles.y, transform.eulerAngles.z) * transform.position;    
+            //Vector3 res = Vector3.Lerp(transform.position, Quaternion.Euler(transform.eulerAngles.x, target.transform.eulerAngles.y, transform.eulerAngles.z) * transform.position, realignTimer.Progress);
+            //Debug.Log("RES: " + res);
+            Quaternion currRotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(defaultOrientation.x, target.transform.eulerAngles.y, transform.rotation.z), 1 - realignTimer.Progress);
+            transform.SetPositionAndRotation(transform.position, currRotation);
+            camOrientation.x = defaultOrientation.x;
             camOrientation.y = target.transform.eulerAngles.y;
         }
 
         // Late update so it updates after player movement
         void LateUpdate()
         {
+            realignTimer.Tick(Time.deltaTime);
             targetPosition = target.position + offset;
             UpdateFocusPoint();
-            ManualRotation();
+            if(isResetting)
+            {
+                ResetCam();
+            } else
+            {
+                ManualRotation();
+            }
+            
 
             Quaternion lookRotation;
 

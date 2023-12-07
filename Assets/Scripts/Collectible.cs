@@ -6,15 +6,29 @@ namespace Platformer
 {
     public class Collectible : Entity
     {
-        [SerializeField] int score = 10; //FIXME set using Factory
+        [SerializeField] Events eventToTrigger;
+        [SerializeField] int value = 10; //FIXME set using Factory
+        [SerializeField] GameObject pickupVFX;
+        [SerializeField] float pickupVFXScale = 1f;
 
         void OnTriggerEnter(Collider other)
         {
             if(other.CompareTag("Player"))
             {
-                EventManager<int>.TriggerEvent(Events.UPDATESCORE.ToString(), score);
+                Collect();                
                 Destroy(gameObject);
             }
         }
+
+        protected virtual void Collect()
+        {
+            EventManager<int>.TriggerEvent(eventToTrigger.ToString(), value);
+            if(pickupVFX != null)
+            {
+                GameObject spawn = Instantiate(pickupVFX, transform.position, Quaternion.identity);
+                spawn.transform.localScale *= pickupVFXScale;
+            }
+        }
+
     }
 }

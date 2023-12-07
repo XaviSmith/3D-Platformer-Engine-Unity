@@ -11,6 +11,10 @@ public class Enums { }
         DAMAGE,
         UPDATEPLAYERHEALTH,
         UPDATESCORE,
+        GETSTAR,
+        GETCOIN,
+        UPDATESTAR,
+        UPDATECOIN,
         PLAYERDIE
     }
 

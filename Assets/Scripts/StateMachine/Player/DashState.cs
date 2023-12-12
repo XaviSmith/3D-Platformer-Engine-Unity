@@ -22,4 +22,9 @@ public class DashState : BaseState
         player.HandleMovement();
         player.HaltVerticalAirMomentum();
     }
+
+    public override void Update()
+    {
+        player.CheckCoyoteTime();
+    }
 }

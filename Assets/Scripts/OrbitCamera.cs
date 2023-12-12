@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utils;
 
-//Based on tutorial here: https://catlikecoding.com/unity/tutorials/movement/orbit-camera/ 
+//Extended from tutorial here: https://catlikecoding.com/unity/tutorials/movement/orbit-camera/ 
 
 namespace Platformer
 {
@@ -16,6 +16,7 @@ namespace Platformer
         [SerializeField] LayerMask obstructionMask = -1;
         [Header("References")]
         [SerializeField] InputReader input;
+        [SerializeField, Range(0f, 1f)] float mouseSensitivity = 0.15f;
         [SerializeField] Transform target;
         Vector3 targetPosition;
         [Header("Settings")]
@@ -164,7 +165,7 @@ namespace Platformer
         // Late update so it updates after player movement
         void LateUpdate()
         {
-            realignTimer.Tick(Time.deltaTime);
+            realignTimer.Tick(Time.unscaledDeltaTime);
             targetPosition = target.position + offset;
             UpdateFocusPoint();
             if(isResetting)
@@ -264,7 +265,7 @@ namespace Platformer
   
             if(isRMBPressed) //Mouse controls
             {
-                camDirection = new Vector2(input.MouseCamDirection.y, -input.MouseCamDirection.x);
+                camDirection = new Vector2(input.MouseCamDirection.y, -input.MouseCamDirection.x) * mouseSensitivity;
             } else //other controls
             {
                 camDirection = new Vector2(input.CamDirection.y, -input.CamDirection.x);

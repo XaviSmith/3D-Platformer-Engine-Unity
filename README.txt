@@ -10,11 +10,13 @@ Features
 Software Used: BFXR, Unity, Visual Studio
 
 PACKAGES REQUIRED (All packages are free): Cartoon Remaster VFX (Free ver)
-	  DOTween (Free ver)
-	  Ultimate Platformer Pack - https://quaternius.itch.io/ultimate-platformer-pack
+	  DOTween (Free ver)	  
 	  Probuilder
 	  Text Mesh Pro
+	  Flexible Cel Shader
 
+RESOURCES: 	
+	 	
 FLOW: 
 SPAWNERS - See EntitySpawner.
 

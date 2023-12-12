@@ -290,7 +290,16 @@ namespace Platformer
             //ground Attack
             if(groundChecker.IsGrounded)
             {
-                baseAttack.StartAttackTimer(); //Start the timer if we're not in cooldown and set the bool to transition our state.
+                //Slide attack
+                if(movement.magnitude > 0)
+                {
+                    dashTimer.Start();
+                    dashAttack.StartAttackTimer();
+                } else
+                {
+                    baseAttack.StartAttackTimer(); //Start the timer if we're not in cooldown and set the bool to transition our state.
+                }
+                
             }     
             
             //air Attack

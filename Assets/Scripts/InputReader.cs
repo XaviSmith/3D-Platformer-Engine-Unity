@@ -27,6 +27,7 @@ namespace Platformer
         public event UnityAction<bool> Dash = delegate { };
         public event UnityAction Attack = delegate { };
         public event UnityAction ResetCamera = delegate { };
+        public event UnityAction Pause = delegate { };
 
         PlayerInputActions inputActions;
        
@@ -127,6 +128,15 @@ namespace Platformer
             if(context.phase == InputActionPhase.Started)
             {
                 ResetCamera.Invoke();
+            }
+            
+        }
+
+        public void OnPause(InputAction.CallbackContext context)
+        {
+            if(context.phase == InputActionPhase.Started)
+            {
+                Pause.Invoke();
             }
             
         }

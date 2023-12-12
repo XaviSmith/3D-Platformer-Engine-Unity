@@ -1,0 +1,7 @@
+Ultimate Platformer Pack - https://quaternius.itch.io/ultimate-platformer-pack
+Lowpoly Platformer Kit
+Cartoon Remaster VFX (Free ver)
+DOTween (Free ver)	  
+Probuilder
+Text Mesh Pro
+Flexible Cel Shader

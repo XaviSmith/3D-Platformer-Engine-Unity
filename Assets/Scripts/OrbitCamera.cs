@@ -11,6 +11,8 @@ namespace Platformer
     public class OrbitCamera : MonoBehaviour
     {
         [SerializeField] bool checkCollisions;
+        [SerializeField] float collisionTimeout = 0.3f; //how long must something block us before we readjust
+        float blockFrames = 0f;
         [SerializeField] LayerMask obstructionMask = -1;
         [Header("References")]
         [SerializeField] InputReader input;
@@ -201,8 +203,19 @@ namespace Platformer
                 //Boxcast to prevent clipping through geometry. If we hit something pull camera in front if it
                 if (Physics.BoxCast(targetPosition, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask))
                 {
-                    rectPosition = targetPosition + castDirection * hit.distance;
-                    lookPosition = rectPosition - rectOffset;
+                    blockFrames += Time.deltaTime; //we use delta time here because we only care about blocking if the game is unpaused.
+                    if(blockFrames >= collisionTimeout)
+                    {
+                        float t = Mathf.Pow(1f - focusSmoothing, Time.unscaledDeltaTime); //Unscaled because camera should always move at same speed
+                        rectPosition = targetPosition + castDirection * hit.distance;
+                        lookPosition = rectPosition - rectOffset;
+                        Vector3 currPos = Vector3.Lerp(transform.position, lookPosition, t);
+                        lookPosition = currPos;
+                    }
+                    
+                } else
+                {
+                    blockFrames = 0f;
                 }
 
             }

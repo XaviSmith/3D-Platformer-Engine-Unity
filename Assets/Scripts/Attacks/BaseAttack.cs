@@ -68,7 +68,7 @@ public abstract class BaseAttack : MonoBehaviour, IAttack, IHitboxListener
         
         if (collider.CompareTag(targetTag))
         {
-            Debug.Log("COLLIDER COLLIDING WITH " + collider.name); //for debugging.
+            //Debug.Log("COLLIDER COLLIDING WITH " + collider.name); //for debugging.
             collider.GetComponent<Health>()?.TakeDamage(attackDamage);
             Hurtbox hurtbox = collider.GetComponent<Hurtbox>();
             hurtbox?.GetHit(attackDamage);

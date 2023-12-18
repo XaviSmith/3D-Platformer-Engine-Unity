@@ -29,7 +29,9 @@ namespace Platformer
 
         [Header("Jump Settings")]
         [SerializeField] float jumpForce = 10f;
+        [SerializeField] float bounceForce = 10f; //for when we bounce off things
         [SerializeField] float jumpDuration = 0.5f; //how long can we hold the button.
+        [SerializeField] float bounceDuration = 0.4f;
         [SerializeField] float jumpCooldown = 0f;
         //[SerializeField] float jumpMaxHeight = 2f;
         [SerializeField] float gravityMultiplier = 1f; //for if we want to bring them to the ground faster or slower. NOTE: It's generally better to change the overall gravity for tweaks since this won't affect speed falling off a platform     
@@ -58,7 +60,6 @@ namespace Platformer
         bool diveFlag = false;
 
         [Header("Attacks")]
-        [SerializeField] Hitbox jumpHitbox;
         [SerializeField] BaseAttack baseAttack;
         [SerializeField] SlideAttack dashAttack;
         [SerializeField] BaseAttack diveAttack;
@@ -78,6 +79,7 @@ namespace Platformer
         List<Timer> timers;
 
         CountdownTimer jumpTimer;
+        CountdownTimer bounceTimer;
         CountdownTimer jumpCooldownTimer; //if we want a cooldown on how long after landing before we can jump again.
         CountdownTimer coyoteTimer;
         CountdownTimer jumpBufferTimer;
@@ -131,6 +133,7 @@ namespace Platformer
             //Declare States
             LocomotionState locomotionState = new LocomotionState(this, animator, particles);
             JumpState jumpState = new JumpState(this, animator, particles);
+            BounceState bounceState = new BounceState(this, animator, particles);
             FallState fallState = new FallState(this, animator);
             WallSlideState wallSlideState = new WallSlideState(this, animator, particles);
             WallJumpState wallJumpState = new WallJumpState(this, animator, particles);
@@ -147,6 +150,7 @@ namespace Platformer
             AddTransition(locomotionState, fallState, new FuncPredicate(() => ShouldFall));
             AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
             AddTransition(jumpState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddTransition(bounceState, fallState, new FuncPredicate(() => !bounceTimer.IsRunning));
             AddTransition(fallState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && jumpVelocity <= 0f && !wallJumpTimer.IsRunning));
             AddTransition(fallState, diveState, new FuncPredicate(() => diveAttack.IsRunning));
             AddTransition(diveState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
@@ -164,8 +168,8 @@ namespace Platformer
             AddTransition(dashJumpState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
             AddTransition(attackState, locomotionState, new FuncPredicate(() => !baseAttack.IsRunning));
 
-            AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !dashTimer.IsRunning && !diveFlag && !diveLandTimer.IsRunning));
-
+            AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !bounceTimer.IsRunning && !dashTimer.IsRunning && !diveFlag && !diveLandTimer.IsRunning));
+            AddAnyTransition(bounceState, new FuncPredicate(() => bounceTimer.IsRunning));
             //set initial state
             stateMachine.SetState(locomotionState);
         }
@@ -174,6 +178,7 @@ namespace Platformer
         {
             //Setup timers
             jumpTimer = new CountdownTimer(jumpDuration);
+            bounceTimer = new CountdownTimer(bounceDuration);
             jumpCooldownTimer = new CountdownTimer(jumpCooldown);
             coyoteTimer = new CountdownTimer(coyoteTime);
             jumpBufferTimer = new CountdownTimer(jumpBuffer);
@@ -204,6 +209,7 @@ namespace Platformer
                 jumpCooldownTimer.Start(); //For if we want a cooldown on how long after landing we want to be able to jump again.
             };
 
+            bounceTimer.OnTimerStart += () => jumpVelocity = bounceForce;
             //Debugs for if coyote time starts acting weird
 
             //coyoteTimer.OnTimerStart += () => Debug.Log("COYOTE TIME STARTED");
@@ -228,7 +234,7 @@ namespace Platformer
                 dashCooldownTimer.Start();
             };
 
-            timers = new List<Timer>(10) { jumpTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer ,wallJumpTimer, dashTimer, airDashLiftTimer, diveLandTimer, diveLandLockoutTimer, dashCooldownTimer}; //defining capacity for some optimization;
+            timers = new List<Timer>(11) { jumpTimer, bounceTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer ,wallJumpTimer, dashTimer, airDashLiftTimer, diveLandTimer, diveLandLockoutTimer, dashCooldownTimer}; //defining capacity for some optimization;
         }
         //*****************************Jumping (also see HandleJump lower down)*****************************
 
@@ -248,7 +254,7 @@ namespace Platformer
 
         void OnJump(bool performed)
         {
-            if(performed && !jumpTimer.IsRunning && !jumpCooldownTimer.IsRunning && (groundChecker.IsGrounded || coyoteTimer.IsRunning) && !diveLandLockoutTimer.IsRunning)
+            if(performed && !jumpTimer.IsRunning && !bounceTimer.IsRunning && !jumpCooldownTimer.IsRunning && (groundChecker.IsGrounded || coyoteTimer.IsRunning) && !diveLandLockoutTimer.IsRunning)
             {
                 jumpTimer.Start();
             } else if(!performed) //We let go of the jump button early, shorthop
@@ -308,17 +314,6 @@ namespace Platformer
             if(ShouldFall)
             {
                 diveAttack.StartAttack();
-            }
-        }
-
-        public void ToggleJumpHitbox(bool val)
-        {
-            if(val)
-            {
-                jumpHitbox.ActivateHitbox();
-            } else
-            {
-                jumpHitbox.DeactivateHitbox();
             }
         }
 
@@ -468,7 +463,7 @@ namespace Platformer
         //Jump has an initial burst of vertical speed, then apply less velocity over time, then let gravity take over.
         public void HandleVerticalMovement()
         {        
-            if(!jumpTimer.IsRunning)
+            if(!jumpTimer.IsRunning && !bounceTimer.IsRunning)
             {
                 if (groundChecker.IsGrounded || coyoteTimer.IsRunning)
                 {
@@ -501,6 +496,11 @@ namespace Platformer
             jumpVelocity = wallJumpForce.y * wallJumpTimer.Progress;
 
             rb.velocity = new Vector3(lastWallDirection.x * wallJumpForce.x, jumpVelocity, lastWallDirection.z * wallJumpForce.x);
+        }
+
+        public void BounceJump() //jumping off something
+        {
+            bounceTimer.Start();
         }
 
         public void HandleDashJump()

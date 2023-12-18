@@ -6,10 +6,10 @@ using Utils;
 //For attacks we want to keep out like a jump hitbox or bee hitbox
 public class PersistentAttack : MonoBehaviour, IAttack, IHitboxListener
 {
-    [SerializeField] bool startActive = true;
-    [SerializeField] Hitbox hitbox;
-    [SerializeField] int attackDamage;
-    [SerializeField] string targetTag; //who do we hit, e.g. enemies etc
+    [SerializeField] protected bool startActive = true;
+    [SerializeField] protected Hitbox hitbox;
+    [SerializeField] protected int attackDamage;
+    [SerializeField] protected string targetTag; //who do we hit, e.g. enemies etc
 
     public bool IsRunning { get; private set; }
 
@@ -60,9 +60,9 @@ public class PersistentAttack : MonoBehaviour, IAttack, IHitboxListener
         }*/
     }
 
-    public void CollidingWith(Collider collider)
+    public virtual void CollidingWith(Collider collider)
     {
-        Debug.Log("COLLIDER COLLIDING WITH " + collider.tag); //for debugging.
+        //Debug.Log("COLLIDER COLLIDING WITH " + collider.tag); //for debugging.
         if (collider.CompareTag(targetTag))
         {
             collider.GetComponent<Health>()?.TakeDamage(attackDamage);

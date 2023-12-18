@@ -5,7 +5,7 @@ using Platformer;
 
 public class DashJumpState : BaseState
 {
-    public DashJumpState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
+    public DashJumpState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
 
     //On Enter start the jump animation
     public override void OnEnter()
@@ -13,11 +13,13 @@ public class DashJumpState : BaseState
         base.OnEnter();
         animator.CrossFade(JumpHash, CROSSFADEDURATION);
         player.StartDashJump();
+        particles.ToggleRunFX(true);
     }
 
     public override void OnExit()
     {
         base.OnExit();
+        particles.ToggleRunFX(false);
         player.ResetDashJumpVelocity();
     }
 

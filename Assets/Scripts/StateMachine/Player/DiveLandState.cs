@@ -5,15 +5,15 @@ using Platformer;
 
 public class DiveLandState : BaseState
 {
-    public DiveLandState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
+    public DiveLandState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
 
     public override void OnEnter()
     {
-        Debug.Log("ENTERED DIVELAND STATE");
         base.OnEnter();
         animator.CrossFade(DiveLandHash, CROSSFADEDURATION);
         player.StartDiveLandTimers();
         player.SetDiveFlag(false);
+        particles.PlayJumpFX();
         //player.CheckJumpBuffer();
     }
 

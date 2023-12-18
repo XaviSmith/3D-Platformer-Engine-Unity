@@ -5,13 +5,14 @@ using Platformer;
 
 public class WallSlideState : BaseState
 {
-    public WallSlideState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
+    public WallSlideState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
 
     public override void OnEnter()
     {
-        base.OnEnter();
+        base.OnEnter();        
         animator.CrossFade(WallSlideHash, CROSSFADEDURATION);
         player.SetDiveFlag(false);
+        particles.ToggleRunFX(true);
     }
 
     public override void FixedUpdate()

@@ -5,7 +5,7 @@ using Platformer;
 
 public class DiveState : BaseState
 {
-    public DiveState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
+    public DiveState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
 
     //On Enter start the jump animation
     public override void OnEnter()
@@ -13,11 +13,13 @@ public class DiveState : BaseState
         base.OnEnter();
         animator.CrossFade(DiveHash, CROSSFADEDURATION);
         player.StartDive();
+        particles.ToggleRunFX(true);
     }
 
     public override void OnExit()
     {
         base.OnExit();
+        particles.ToggleRunFX(false);
         player.ResetDiveVelocity();
     }
 

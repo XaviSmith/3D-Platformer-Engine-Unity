@@ -5,7 +5,7 @@ using Platformer;
 
 public class DashState : BaseState
 {
-    public DashState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
+    public DashState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
 
     //On Enter start the jump animation
     public override void OnEnter()
@@ -13,6 +13,7 @@ public class DashState : BaseState
         base.OnEnter();
         animator.CrossFade(DashHash, CROSSFADEDURATION);
         player.DashAttack();
+        particles.ToggleRunFX(true);
     }
 
     public override void FixedUpdate()
@@ -26,5 +27,11 @@ public class DashState : BaseState
     public override void Update()
     {
         player.CheckCoyoteTime();
+    }
+
+    public override void OnExit()
+    {
+        base.OnExit();
+        particles.ToggleRunFX(false);
     }
 }

@@ -11,6 +11,7 @@ public abstract class BaseState : IState
 {
     protected readonly PlayerController player;
     protected readonly Animator animator;
+    protected readonly PlayerParticles particles;
 
     //Animation Hashes
     protected static readonly int LocomotionHash = Animator.StringToHash("Locomotion");
@@ -25,10 +26,11 @@ public abstract class BaseState : IState
 
     protected const float CROSSFADEDURATION = 0.1f;
 
-    protected BaseState(PlayerController _player, Animator _animator)
+    protected BaseState(PlayerController _player, Animator _animator, PlayerParticles _particles = null)
     {
         this.player = _player;
         this.animator = _animator;
+        this.particles = _particles;
     }
 
     public virtual void OnEnter()

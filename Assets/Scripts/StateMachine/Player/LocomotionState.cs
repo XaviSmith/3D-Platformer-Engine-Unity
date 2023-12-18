@@ -5,7 +5,7 @@ using Platformer;
 
 public class LocomotionState : BaseState
 {
-    public LocomotionState(PlayerController _player, Animator _animator) : base(_player, _animator) { }
+    public LocomotionState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
 
     public override void OnEnter()
     {
@@ -28,6 +28,7 @@ public class LocomotionState : BaseState
     public override void OnExit()
     {
         base.OnExit();
+        particles.ToggleRunFX(false);
         //player.StopCoyoteTime();
     }
 }

@@ -18,6 +18,7 @@ namespace Platformer
         [SerializeField] Animator animator;
         [SerializeField] CinemachineFreeLook freeLookVCam;
         [SerializeField] InputReader input;
+        [SerializeField] PlayerParticles particles;
 
         [Header("Movement Settings")]
         [SerializeField] float moveSpeed = 6f;
@@ -57,6 +58,7 @@ namespace Platformer
         bool diveFlag = false;
 
         [Header("Attacks")]
+        [SerializeField] Hitbox jumpHitbox;
         [SerializeField] BaseAttack baseAttack;
         [SerializeField] SlideAttack dashAttack;
         [SerializeField] BaseAttack diveAttack;
@@ -127,16 +129,16 @@ namespace Platformer
             stateMachine = new StateMachine();
 
             //Declare States
-            LocomotionState locomotionState = new LocomotionState(this, animator);
-            JumpState jumpState = new JumpState(this, animator);
+            LocomotionState locomotionState = new LocomotionState(this, animator, particles);
+            JumpState jumpState = new JumpState(this, animator, particles);
             FallState fallState = new FallState(this, animator);
-            WallSlideState wallSlideState = new WallSlideState(this, animator);
-            WallJumpState wallJumpState = new WallJumpState(this, animator);
-            DashState dashState = new DashState(this, animator);
-            DashJumpState dashJumpState = new DashJumpState(this, animator);
+            WallSlideState wallSlideState = new WallSlideState(this, animator, particles);
+            WallJumpState wallJumpState = new WallJumpState(this, animator, particles);
+            DashState dashState = new DashState(this, animator, particles);
+            DashJumpState dashJumpState = new DashJumpState(this, animator, particles);
             AttackState attackState = new AttackState(this, animator);
-            DiveState diveState = new DiveState(this, animator);
-            DiveLandState diveLandState = new DiveLandState(this, animator);
+            DiveState diveState = new DiveState(this, animator, particles);
+            DiveLandState diveLandState = new DiveLandState(this, animator, particles);
 
             //Define transitions
             AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning || jumpBufferTimer.IsRunning));
@@ -279,7 +281,7 @@ namespace Platformer
                 if (performed && groundChecker.IsGrounded && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
                 {
                     dashTimer.Start();
-                    dashAttack.StartAttackTimer();
+                    dashAttack.StartAttack();
                 } 
             }
             
@@ -294,10 +296,10 @@ namespace Platformer
                 if(movement.magnitude > 0)
                 {
                     dashTimer.Start();
-                    dashAttack.StartAttackTimer();
+                    dashAttack.StartAttack();
                 } else
                 {
-                    baseAttack.StartAttackTimer(); //Start the timer if we're not in cooldown and set the bool to transition our state.
+                    baseAttack.StartAttack(); //Start the timer if we're not in cooldown and set the bool to transition our state.
                 }
                 
             }     
@@ -305,7 +307,6 @@ namespace Platformer
             //air Attack
             if(ShouldFall)
             {
-                diveAttack.StartAttackTimer();
             }
         }
 
@@ -613,6 +614,18 @@ namespace Platformer
             Vector3 adjustedDirection = wallJumpChecker.WallNormal;
             HandleRotation(adjustedDirection);
         }
+
+        /*public void ToggleRunFX(bool val)
+        {
+            if(val)
+            {
+                runFx.Play(true);
+            } else
+            {
+                runFx.Stop(true);
+            }
+            
+        }*/
 
         //*************************************************************************************************
 

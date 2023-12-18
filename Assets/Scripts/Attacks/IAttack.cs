@@ -4,5 +4,5 @@ using UnityEngine;
 
 public interface IAttack
 {
-    void StartAttackTimer();
+    void StartAttack();
 }

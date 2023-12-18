@@ -3,35 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utils;
 
-//Not a scriptable obj so we can use Awake/Update functions to keep track of our own timers.
-public abstract class BaseAttack : MonoBehaviour, IAttack, IHitboxListener
+//For attacks we want to keep out like a jump hitbox or bee hitbox
+public class PersistentAttack : MonoBehaviour, IAttack, IHitboxListener
 {
+    [SerializeField] bool startActive = true;
     [SerializeField] Hitbox hitbox;
     [SerializeField] int attackDamage;
-    [SerializeField] protected float cooldownTime;
     [SerializeField] string targetTag; //who do we hit, e.g. enemies etc
 
-    protected CountdownTimer attackTimer = null;
+    public bool IsRunning { get; private set; }
 
-    public bool IsRunning => attackTimer != null && attackTimer.IsRunning;
-
-    protected void Awake()
+    protected void OnEnable()
     {
-        SetupAttackTimer();
-    }
-
-    protected void SetupAttackTimer()
-    {
-        attackTimer = new CountdownTimer(cooldownTime);
-
-        attackTimer.OnTimerStart += () => { hitbox.ActivateHitbox(); };
-        attackTimer.OnTimerStop += () => { hitbox.DeactivateHitbox(); };
+        if(startActive)
+        {
+            StartAttack();
+        }
     }
 
     protected virtual void Update()
     {
-        attackTimer.Tick(Time.deltaTime);
-        if(attackTimer.IsRunning)
+        if(IsRunning)
         {
             hitbox.UpdateHitbox();
         }
@@ -39,10 +31,15 @@ public abstract class BaseAttack : MonoBehaviour, IAttack, IHitboxListener
 
     public virtual void StartAttack()
     {
-        if (!attackTimer.IsRunning)
-        {         
-            attackTimer.Start();
-        }  
+        IsRunning = true;
+        hitbox.ActivateHitbox();
+        hitbox.AddResponder(this);
+    }
+
+    public virtual void StopAttack()
+    {
+        IsRunning = false;
+        hitbox.DeactivateHitbox();
     }
 
     // Start is called before the first frame update
@@ -65,10 +62,9 @@ public abstract class BaseAttack : MonoBehaviour, IAttack, IHitboxListener
 
     public void CollidingWith(Collider collider)
     {
-        
+        Debug.Log("COLLIDER COLLIDING WITH " + collider.tag); //for debugging.
         if (collider.CompareTag(targetTag))
         {
-            Debug.Log("COLLIDER COLLIDING WITH " + collider.name); //for debugging.
             collider.GetComponent<Health>()?.TakeDamage(attackDamage);
             Hurtbox hurtbox = collider.GetComponent<Hurtbox>();
             hurtbox?.GetHit(attackDamage);

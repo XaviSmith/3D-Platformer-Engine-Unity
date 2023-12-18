@@ -103,7 +103,7 @@ namespace Platformer
                 return;
             }
 
-            baseAttack.StartAttackTimer();
+            baseAttack.StartAttack();
             baseAttack.Attack();
             //playerDetector.PlayerHealth?.TakeDamage(10);
             //Debug.Log("Enemy.Attack");

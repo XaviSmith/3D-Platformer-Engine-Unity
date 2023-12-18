@@ -310,6 +310,15 @@ namespace Platformer
                 diveAttack.StartAttack();
             }
         }
+
+        public void ToggleJumpHitbox(bool val)
+        {
+            if(val)
+            {
+                jumpHitbox.ActivateHitbox();
+            } else
+            {
+                jumpHitbox.DeactivateHitbox();
             }
         }
 

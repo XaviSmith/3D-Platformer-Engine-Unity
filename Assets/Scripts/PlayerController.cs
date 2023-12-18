@@ -307,6 +307,9 @@ namespace Platformer
             //air Attack
             if(ShouldFall)
             {
+                diveAttack.StartAttack();
+            }
+        }
             }
         }
 

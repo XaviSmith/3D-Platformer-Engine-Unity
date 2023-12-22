@@ -11,7 +11,6 @@ public class WallJumpState : BaseState
     {
         base.OnEnter();
         animator.CrossFade(WallJumpHash, CROSSFADEDURATION);
-        particles.ToggleRunFX(false);
         particles.PlayJumpFX();
     }
 

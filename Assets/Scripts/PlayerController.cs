@@ -41,7 +41,8 @@ namespace Platformer
         [Header("Wall Jump Settings")]
         [SerializeField] float wallSlideSpeed = 1f;
         [SerializeField] Vector2 wallJumpForce = new Vector2(24f, 20f);
-        [SerializeField] float wallJumpCooldown = 0.1f;
+        [SerializeField] float wallJumpDuration = 0.1f;
+        [SerializeField] float wallSlideLockout = 0.1f; //how long are we locked out of wallsliding after cancelling it
         Vector3 lastWallDirection;
 
         [Header("Dash Settings")] //To dash we basically just multiply horizontal movespeed * dashVelocity
@@ -55,7 +56,7 @@ namespace Platformer
         [SerializeField] float airDashLiftTime = 0.1f;
         [SerializeField] Vector2 airDashForce = new Vector2(10f, -2f); //x axis is horizontal movement, y axis is vertical movement
         [SerializeField] float diveLandStateDuration = 1f;
-        [SerializeField] float diveLandLockout = 0.2f; //How long after diving before we can regain movement
+        [SerializeField] float diveLandLockout = 0.1f; //How long after diving before we can regain movement
 
         bool diveFlag = false;
 
@@ -85,6 +86,7 @@ namespace Platformer
         CountdownTimer jumpBufferTimer;
 
         CountdownTimer wallJumpTimer;
+        CountdownTimer wallSlideCancelTimer;
 
         CountdownTimer dashTimer;
         CountdownTimer dashCooldownTimer;
@@ -159,7 +161,7 @@ namespace Platformer
             AddTransition(diveLandState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
             AddTransition(diveLandState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
             AddTransition(wallSlideState, wallJumpState, new FuncPredicate(() => !groundChecker.IsGrounded && wallJumpTimer.IsRunning));
-            AddTransition(wallSlideState, fallState, new FuncPredicate(() => !wallJumpTimer.IsRunning && !wallJumpChecker.IsTouchingWall));
+            AddTransition(wallSlideState, fallState, new FuncPredicate(() => wallSlideCancelTimer.IsRunning || (!wallJumpTimer.IsRunning && !wallJumpChecker.IsTouchingWall)));
             AddTransition(wallJumpState, fallState, new FuncPredicate(() => !jumpTimer.IsRunning && !wallJumpTimer.IsRunning));
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
@@ -187,7 +189,8 @@ namespace Platformer
             diveLandTimer = new CountdownTimer(diveLandStateDuration);
             diveLandLockoutTimer = new CountdownTimer(diveLandLockout);
             dashCooldownTimer = new CountdownTimer(dashCooldown);
-            wallJumpTimer = new CountdownTimer(wallJumpCooldown);
+            wallJumpTimer = new CountdownTimer(wallJumpDuration);
+            wallSlideCancelTimer = new CountdownTimer(wallSlideLockout);
 
             jumpTimer.OnTimerStart += () =>
             {
@@ -234,7 +237,7 @@ namespace Platformer
                 dashCooldownTimer.Start();
             };
 
-            timers = new List<Timer>(11) { jumpTimer, bounceTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer ,wallJumpTimer, dashTimer, airDashLiftTimer, diveLandTimer, diveLandLockoutTimer, dashCooldownTimer}; //defining capacity for some optimization;
+            timers = new List<Timer>(12) { jumpTimer, bounceTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer, wallJumpTimer, wallSlideCancelTimer, dashTimer, airDashLiftTimer, diveLandTimer, diveLandLockoutTimer, dashCooldownTimer}; //defining capacity for some optimization;
         }
         //*****************************Jumping (also see HandleJump lower down)*****************************
 
@@ -489,6 +492,11 @@ namespace Platformer
             lastWallDirection = wallJumpChecker.WallNormal;
             jumpVelocity = 0f;
             rb.velocity = new Vector3(0f, -wallSlideSpeed, 0f);
+
+            if (movement.z < 0 && !wallSlideCancelTimer.IsRunning)
+            {
+                wallSlideCancelTimer.Start();
+            }
         }
 
         public void HandleWallJump()

@@ -24,6 +24,7 @@ public class WallSlideState : BaseState
     {
         base.OnExit();
         player.FlipDirectionFromWall();
+        particles.ToggleRunFX(false);
     }
 
 }

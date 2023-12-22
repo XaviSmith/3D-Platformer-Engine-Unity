@@ -22,8 +22,8 @@ TagManager:
   - Hurtbox
   - Enemy
   - Collectible
-  - 
-  - 
+  - PlayerHurtbox
+  - Player
   - 
   - 
   - 

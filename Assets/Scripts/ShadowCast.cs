@@ -12,7 +12,7 @@ public class ShadowCast : MonoBehaviour
     [SerializeField] SpriteRenderer shadowSprite; //We can have multiple shadow sprites and raycasts if we care about shadows hanging off ledges. For this project that's acceptable.
     [SerializeField] float shadowDist;
     [SerializeField] Vector3 offset;
-    [SerializeField] Vector3 shadowOffset;
+    [SerializeField] Vector3 shadowOffset = new Vector3(0,0.05f, 0); //Where the shadow should offset
     [SerializeField, Range(0, 255)] float maxShadowAlpha = 178;
     RaycastHit hit;
     Color32 spriteColor;
@@ -24,11 +24,6 @@ public class ShadowCast : MonoBehaviour
 
     void LateUpdate()
     {
-        if(drawDebugRay)
-        {
-            Debug.DrawRay(transform.position + offset, Vector3.down * shadowDist, Color.blue);
-        }
-        
         if (Physics.Raycast(transform.position + offset, Vector3.down, out hit, shadowDist, layers))
         {
             shadowSprite.transform.position = new Vector3(hit.point.x, hit.point.y + shadowOffset.y, hit.point.z); //raise it a teeny bit off the floor
@@ -41,4 +36,11 @@ public class ShadowCast : MonoBehaviour
         shadowSprite.color = spriteColor;
     }
 
+    void OnDrawGizmos()
+    {
+        if(drawDebugRay)
+        {
+            Debug.DrawRay(transform.position + offset, Vector3.down* shadowDist, Color.blue);
+        }
+    }
 }

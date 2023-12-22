@@ -43,6 +43,17 @@ public class Hurtbox : MonoBehaviour
         
     }
 
+    public void GetSquashed(int damage)
+    {
+        if (!damageTimer.IsRunning)
+        {
+            //Debug.Log(healthObj.transform.name + " GOT HIT");
+            damageTimer.Start();
+            healthObj.SquashDamage(damage);
+        }
+
+    }
+
     void OnDrawGizmos()
     {
         if(drawHurtbox)

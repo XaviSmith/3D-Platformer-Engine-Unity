@@ -29,9 +29,4 @@ public class PlatformMover : MonoBehaviour
             .SetLoops(-1, LoopType.Yoyo);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

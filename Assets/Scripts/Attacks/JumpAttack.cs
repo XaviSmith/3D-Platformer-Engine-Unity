@@ -15,9 +15,8 @@ public class JumpAttack : PersistentAttack
         if (collider.CompareTag(targetTag))
         {
             player?.BounceJump();
-            collider.GetComponent<Health>()?.TakeDamage(attackDamage);
-            Hurtbox hurtbox = collider.GetComponent<Hurtbox>();
-            hurtbox?.GetHit(attackDamage);
+            //collider.GetComponent<Health>()?.SquashDamage(attackDamage);
+            collider.GetComponent<Hurtbox>()?.GetSquashed(attackDamage);
         }   
     }
 }

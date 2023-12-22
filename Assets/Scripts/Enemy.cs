@@ -6,37 +6,36 @@ using Utils;
 
 namespace Platformer
 {
-    [RequireComponent(typeof(NavMeshAgent))]
-    [RequireComponent(typeof(PlayerDetector))]
     public class Enemy : Entity
     {
-        [SerializeField] NavMeshAgent agent;
-        [SerializeField] Animator animator;
-        [SerializeField] Health health;
+        [SerializeField] protected NavMeshAgent agent;
+        [SerializeField] protected Animator animator;
+        [SerializeField] protected Health health;
 
-        [SerializeField] PlayerDetector playerDetector;
-        [SerializeField] float wanderRadius = 20f;
-        [SerializeField] float timeBetweenAttacks = 2f;
+        [SerializeField] protected PlayerDetector playerDetector;
+        [SerializeField] protected float wanderRadius = 20f;
+        [SerializeField] protected float timeBetweenAttacks = 2f;
 
         [Header("Death Settings")]
-        [SerializeField] float deathTime;
-        [SerializeField] Vector3 deathDirection;
-        [SerializeField] float deathMoveSpeed;
-        [SerializeField] GameObject deathVFX;
-        [SerializeField] float deathCollisionRadius = 0.5f; //When we're dead check a sphere within this radius to see if we hit something. If we did, explode early.
-        [SerializeField] Vector3 deathColliderOffset = Vector3.zero;
+        [SerializeField] protected bool drawDeathCollider;
+        [SerializeField] protected float deathTime;
+        [SerializeField] protected Vector3 deathDirection;
+        [SerializeField] protected float deathMoveSpeed;
+        [SerializeField] protected GameObject deathVFX;
+        [SerializeField] protected float deathCollisionRadius = 0.5f; //When we're dead check a sphere within this radius to see if we hit something. If we did, explode early.
+        [SerializeField] protected Vector3 deathColliderOffset = Vector3.zero;
 
-        StateMachine stateMachine;
-        void AddTransition(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
-        void AddAnyTransition(IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
+        protected StateMachine stateMachine;
+        protected void AddTransition(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
+        protected void AddAnyTransition(IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
 
         [Header("Attacks")]
-        [SerializeField] BaseAttack baseAttack;
+        [SerializeField] protected BaseAttack baseAttack;
 
-        CountdownTimer attackTimer; //how long should an attack take
-        CountdownTimer deathTimer; //How long after dying before we poof away;
+        protected CountdownTimer attackTimer; //how long should an attack take
+        protected CountdownTimer deathTimer; //How long after dying before we poof away;
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
             if (playerDetector == null)
             {
@@ -50,18 +49,14 @@ namespace Platformer
         }
 
         // Start is called before the first frame update
-        void Start()
+        protected void Start()
         {
             attackTimer = new CountdownTimer(timeBetweenAttacks);
             deathTimer = new CountdownTimer(deathTime);
 
             deathTimer.OnTimerStop += () =>
             {
-                if (deathVFX != null)
-                {
-                    Instantiate(deathVFX, transform.position, Quaternion.identity);
-                    Destroy(gameObject);
-                }
+                DieVFX();
             };
 
             //************State machine************
@@ -70,6 +65,7 @@ namespace Platformer
             EnemyChaseState chaseState = new EnemyChaseState(this, animator, agent, GameManager.Instance.MainPlayer); //Refactor this to use playerController to get player
             EnemyAttackState attackState = new EnemyAttackState(this, animator, agent, GameManager.Instance.MainPlayer);
             EnemyDeathState deathState = new EnemyDeathState(this, animator);
+            EnemySquashedState squashedState = new EnemySquashedState(this, animator);
 
             AddTransition(wanderState, chaseState, new FuncPredicate(playerDetector.CanDetectPlayer));
             AddTransition(chaseState, wanderState, new FuncPredicate(() => !playerDetector.CanDetectPlayer()));
@@ -77,6 +73,7 @@ namespace Platformer
             AddTransition(attackState, chaseState, new FuncPredicate(() => playerDetector.CanDetectPlayer() && !baseAttack.IsRunning));
 
             AddAnyTransition(deathState, new FuncPredicate(() => health.IsDead));
+            AddAnyTransition(squashedState, new FuncPredicate(() => health.IsSquashed));
 
             //Set initial state
             stateMachine.SetState(wanderState);
@@ -84,14 +81,14 @@ namespace Platformer
         }
 
         // Update is called once per frame
-        void Update()
+        protected void Update()
         {
             stateMachine.Update();
             attackTimer.Tick(Time.deltaTime);
             deathTimer.Tick(Time.deltaTime);
         }
 
-        public void FixedUpdate()
+        protected void FixedUpdate()
         {
             stateMachine.FixedUpdate();
         }
@@ -120,6 +117,15 @@ namespace Platformer
             
         }
 
+        public void DieVFX()
+        {
+            if (deathVFX != null)
+            {
+                Instantiate(deathVFX, transform.position, Quaternion.identity);
+                Destroy(gameObject);
+            }
+        }
+
         public void HandleDeathMovement()
         {
             //Check for collisions, if we get one explode early. Cheaper than using a rigidbody for this one thing.
@@ -140,11 +146,15 @@ namespace Platformer
 
         }
 
-        private void OnDrawGizmos()
+        protected void OnDrawGizmos()
         {
-            Gizmos.color = Color.blue;
+            if(drawDeathCollider)
+            {
+                Gizmos.color = Color.black;
 
-            Gizmos.DrawWireSphere(transform.position - deathColliderOffset, deathCollisionRadius);
+                Gizmos.DrawWireSphere(transform.position - deathColliderOffset, deathCollisionRadius);
+            }
+            
         }
     }
 }

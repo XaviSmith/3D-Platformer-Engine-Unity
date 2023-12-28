@@ -10,6 +10,7 @@ namespace Platformer
     public class PlayerController : MonoBehaviour
     {
         public static Transform Transform { get; private set; } //We can move this to GameManager and add players to a list if we decide to have multiple, but this is good enough for now.
+        [SerializeField] bool canMove = true;
 
         [Header("References")]
         [SerializeField] Rigidbody rb;
@@ -170,7 +171,7 @@ namespace Platformer
             AddTransition(dashJumpState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
             AddTransition(attackState, locomotionState, new FuncPredicate(() => !baseAttack.IsRunning));
 
-            AddAnyTransition(locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !bounceTimer.IsRunning && !dashTimer.IsRunning && !diveFlag && !diveLandTimer.IsRunning));
+            AddAnyTransition(locomotionState, new FuncPredicate(() => !canMove || ( groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !bounceTimer.IsRunning && !dashTimer.IsRunning && !diveFlag && !diveLandTimer.IsRunning)));
             AddAnyTransition(bounceState, new FuncPredicate(() => bounceTimer.IsRunning));
             //set initial state
             stateMachine.SetState(locomotionState);
@@ -399,16 +400,20 @@ namespace Platformer
         // Update is called once per frame
         void Update()
         {
-            movement = new Vector3(input.Direction.x, 0, input.Direction.y);
-            stateMachine.Update();
+            if (canMove)
+            {
+                movement = new Vector3(input.Direction.x, 0, input.Direction.y);
+            }
+                stateMachine.Update();
 
-            HandleTimers();
-            UpdateAnimator();
+                HandleTimers();
+                UpdateAnimator();
+            
         }
 
         private void FixedUpdate()
         {
-            stateMachine.FixedUpdate();
+            stateMachine.FixedUpdate();           
         }
 
         void HandleTimers()
@@ -594,6 +599,13 @@ namespace Platformer
             //transform.LookAt(transform.position + adjustedDirection); //Have player look where they're going
         }
 
+        //For if we manually want to make the player look at something (e.g. during a cutscene)
+        public void LookAtTarget(Transform target)
+        {
+            transform.LookAt(target);
+            transform.rotation = Quaternion.Euler(0, transform.eulerAngles.y, transform.eulerAngles.z);
+        }
+
         //Move the player
         void HandleHorizontalMovement(Vector3 adjustedDirection)
         {
@@ -648,6 +660,16 @@ namespace Platformer
         }*/
 
         //*************************************************************************************************
+
+        public void LockMovement()
+        {
+            canMove = false;
+        }
+
+        public void UnlockMovement()
+        {
+            canMove = true;
+        }
 
         void OnDrawGizmos()
         {

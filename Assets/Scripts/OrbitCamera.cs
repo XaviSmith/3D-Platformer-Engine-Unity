@@ -10,6 +10,7 @@ namespace Platformer
     [RequireComponent(typeof(Camera))]
     public class OrbitCamera : MonoBehaviour
     {
+        [SerializeField] bool locked;
         [SerializeField] bool checkCollisions;
         [SerializeField] float collisionTimeout = 0.3f; //how long must something block us before we readjust
         float blockFrames = 0f;
@@ -20,11 +21,17 @@ namespace Platformer
         [SerializeField] Transform target;
         Vector3 targetPosition;
         [Header("Settings")]
+        [SerializeField] bool invertXAxis;
+        [SerializeField] bool invertYAxis;
+        public void InvertXAxis(bool val) => invertXAxis = val;
+        public void InvertYAxis(bool val) => invertYAxis = val;
+
         [SerializeField] float realignTime = 0.2f; //how long do we take to realign the camera for auto-aligns
         [SerializeField] Vector3 offset;
         [SerializeField, Range(1f, 200f)] float distance;
         [SerializeField, Min(0f)] float focusRadius = 1f; //How much can the player move before we move the cam with them
         [SerializeField, Range(0f, 1f)] float focusSmoothing = 0.5f;
+        [SerializeField, Range(0f, 2f)] float autoRotationSensitivity = 0.45f;
         [SerializeField, Range(0f, 360f)] float rotationSpeed = 90f;
         [SerializeField, Min(0f)] float realignDelay = 5f; //how long before we start manually delaying the camera
         [SerializeField, Range(0f, 90f)] float alignSmoothRange = 45; // what angle do we automatically realign at full speed
@@ -61,6 +68,16 @@ namespace Platformer
             }
         } 
 
+        public void LockCamera()
+        {
+            locked = true;
+        }
+
+        public void UnlockCamera()
+        {
+            locked = false;
+        }
+
         void Awake()
         {
             _camera = GetComponent<Camera>();
@@ -87,6 +104,12 @@ namespace Platformer
             input.EnableMouseControlCamera += OnEnableMouseControlCamera;
             input.DisableMouseControlCamera += OnDisableMouseControlCamera;
             input.ResetCamera += OnResetCamera;
+
+            if(GameManager.Instance)
+            {
+                GameManager.Instance.currCamera = this;
+            }
+            
         }
 
         void OnDisable()
@@ -152,78 +175,85 @@ namespace Platformer
                 return;
             }
 
-            Debug.Log("PROGRESS: " + realignTimer.Progress);
-            //Vector3 targetAlign = Quaternion.Euler(transform.eulerAngles.x, target.transform.eulerAngles.y, transform.eulerAngles.z) * transform.position;    
-            //Vector3 res = Vector3.Lerp(transform.position, Quaternion.Euler(transform.eulerAngles.x, target.transform.eulerAngles.y, transform.eulerAngles.z) * transform.position, realignTimer.Progress);
-            //Debug.Log("RES: " + res);
             Quaternion currRotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(defaultOrientation.x, target.transform.eulerAngles.y, transform.rotation.z), 1 - realignTimer.Progress);
             transform.SetPositionAndRotation(transform.position, currRotation);
             camOrientation.x = defaultOrientation.x;
             camOrientation.y = target.transform.eulerAngles.y;
         }
 
+        public void ResetCamOverride()
+        {
+            OnResetCamera();
+        }
+
         // Late update so it updates after player movement
         void LateUpdate()
         {
-            realignTimer.Tick(Time.unscaledDeltaTime);
-            targetPosition = target.position + offset;
-            UpdateFocusPoint();
-            if(isResetting)
+            if(!locked)
             {
-                ResetCam();
-            } else
-            {
-                ManualRotation();
-            }
-            
-
-            Quaternion lookRotation;
-
-            if(isRotatingCamera || AutomaticRotation())
-            {
-                ClampAngles();
-                lookRotation = Quaternion.Euler(camOrientation);
-            } else
-            {
-                lookRotation = transform.rotation;
-            }
-
-            Vector3 lookDirection = lookRotation * Vector3.forward;
-            Vector3 lookPosition = focusPoint - lookDirection * distance; //offset the camera by look direciton and distance
-
-            // For if we want to make sure the camera never clips Geometry. Try raising the offset higher if this acts buggy on slopes
-            if(checkCollisions)
-            {
-                //ideal focus point
-                Vector3 rectOffset = lookDirection * _camera.nearClipPlane;
-                Vector3 rectPosition = lookPosition + rectOffset;
-                Vector3 castLine = rectPosition - targetPosition;
-                float castDistance = castLine.magnitude;
-                Vector3 castDirection = castLine / castDistance;
-
-                //Boxcast to prevent clipping through geometry. If we hit something pull camera in front if it
-                if (Physics.BoxCast(targetPosition, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask))
+                realignTimer.Tick(Time.unscaledDeltaTime);
+                targetPosition = target.position + offset;
+                UpdateFocusPoint();
+                if (isResetting)
                 {
-                    blockFrames += Time.deltaTime; //we use delta time here because we only care about blocking if the game is unpaused.
-                    if(blockFrames >= collisionTimeout)
-                    {
-                        float t = Mathf.Pow(1f - focusSmoothing, Time.unscaledDeltaTime); //Unscaled because camera should always move at same speed
-                        rectPosition = targetPosition + castDirection * hit.distance;
-                        lookPosition = rectPosition - rectOffset;
-                        Vector3 currPos = Vector3.Lerp(transform.position, lookPosition, t);
-                        lookPosition = currPos;
-                    }
-                    
-                } else
+                    ResetCam();
+                }
+                else
                 {
-                    blockFrames = 0f;
+                    ManualRotation();
                 }
 
+
+                Quaternion lookRotation;
+
+                if (isRotatingCamera || AutomaticRotation())
+                {
+                    ClampAngles();
+                    lookRotation = Quaternion.Euler(camOrientation);
+                }
+                else
+                {
+                    lookRotation = transform.rotation;
+                }
+
+                Vector3 lookDirection = lookRotation * Vector3.forward;
+                Vector3 lookPosition = focusPoint - lookDirection * distance; //offset the camera by look direciton and distance
+
+                // For if we want to make sure the camera never clips Geometry. Try raising the offset higher if this acts buggy on slopes
+                if (checkCollisions)
+                {
+                    //ideal focus point
+                    Vector3 rectOffset = lookDirection * _camera.nearClipPlane;
+                    Vector3 rectPosition = lookPosition + rectOffset;
+                    Vector3 castLine = rectPosition - targetPosition;
+                    float castDistance = castLine.magnitude;
+                    Vector3 castDirection = castLine / castDistance;
+
+                    //Boxcast to prevent clipping through geometry. If we hit something pull camera in front if it
+                    if (Physics.BoxCast(targetPosition, CameraHalfExtends, castDirection, out RaycastHit hit, lookRotation, castDistance, obstructionMask))
+                    {
+                        blockFrames += Time.deltaTime; //we use delta time here because we only care about blocking if the game is unpaused.
+                        if (blockFrames >= collisionTimeout)
+                        {
+                            float t = Mathf.Pow(1f - focusSmoothing, Time.unscaledDeltaTime); //Unscaled because camera should always move at same speed
+                            rectPosition = targetPosition + castDirection * hit.distance;
+                            lookPosition = rectPosition - rectOffset;
+                            Vector3 currPos = Vector3.Lerp(transform.position, lookPosition, t);
+                            lookPosition = currPos;
+                        }
+
+                    }
+                    else
+                    {
+                        blockFrames = 0f;
+                    }
+
+                }
+
+                //*******
+
+                transform.SetPositionAndRotation(lookPosition, lookRotation);
             }
-
-            //*******
-
-            transform.SetPositionAndRotation(lookPosition, lookRotation);
         }
 
         void UpdateFocusPoint()
@@ -237,7 +267,7 @@ namespace Platformer
                 float targetOffset = Vector3.Distance(targetPoint, focusPoint);
                 float t = 1f; //for the lerp
 
-                //TODO See if removing the T stuff and reverting back to t being focusRadius/targetOffset makes any difference
+                //TODO Look into the t stuff and how big of a difference reverting back to t being focusRadius/targetOffset makes
                 if (targetOffset > 0.01f && focusSmoothing > 0f)
                 {
                     t = Mathf.Pow(1f - focusSmoothing, Time.unscaledDeltaTime); //Unscaled because camera should always move at same speed
@@ -265,13 +295,16 @@ namespace Platformer
   
             if(isRMBPressed) //Mouse controls
             {
-                camDirection = new Vector2(input.MouseCamDirection.y, -input.MouseCamDirection.x) * mouseSensitivity;
+                camDirection = new Vector2(input.MouseCamDirection.y, input.MouseCamDirection.x) * mouseSensitivity;
             } else //other controls
             {
-                camDirection = new Vector2(input.CamDirection.y, -input.CamDirection.x);
+                camDirection = new Vector2(input.CamDirection.y, input.CamDirection.x);
             }
-            
-            if(camDirection.x < -DeadZone || camDirection.x > DeadZone || camDirection.y < -DeadZone || camDirection.y > DeadZone)
+
+            if (invertXAxis) { camDirection.y = -camDirection.y; }
+            if (invertYAxis) { camDirection.x = -camDirection.x; }
+
+            if (camDirection.x < -DeadZone || camDirection.x > DeadZone || camDirection.y < -DeadZone || camDirection.y > DeadZone)
             {
                 isRotatingCamera = true;
                 camOrientation += rotationSpeed * Time.unscaledDeltaTime * camDirection;
@@ -314,7 +347,7 @@ namespace Platformer
 
             //Realign to default angle.
             float headingAngle = GetCurrentHorizontalAngle(movementDelta / Mathf.Sqrt(movementDeltaSqr)); //pass in movementDelta's unit vector
-            float rotationChange = rotationSpeed * Mathf.Min(Time.unscaledDeltaTime, movementDeltaSqr);
+            float rotationChange = rotationSpeed * Mathf.Min(Time.unscaledDeltaTime, movementDeltaSqr) * autoRotationSensitivity;
 
             //Smooth the rotation according to how much we have left to rotate
             float angleDelta = Mathf.Abs(Mathf.DeltaAngle(camOrientation.y, headingAngle)); //How much rotation left

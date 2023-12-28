@@ -4,8 +4,16 @@ obj/*
 Logs/*
 Temp/*
 UserSettings/*
+Assets/Materials/*
+Assets/Art/*
+Assets/Fonts/*
 Assets/Ultimate Platformer Pack - Dec 2021 - Copy/*
 Assets/CasualGameSounds/*
+Assets/Art/3d Leap Land/*
+Assets/FlexibleCelShader/*
+Assets/Art/3d Leap Land.meta
+Assets/lowpoly-platformer-kit-free-asset-pack
+Assets/lowpoly-platformer-kit-free-asset-pack.meta
 Assets/JMO Assets/*
 Assets/CasualGameSounds.meta
 Assets/JMO Assets.meta
@@ -13,6 +21,8 @@ Assets/Ultimate Platformer Pack - Dec 2021 - Copy.meta
 Assets/ProBuilder Data/*
 Assets/TextMesh Pro/*
 Assets/TextMesh Pro.meta
+Assets/SFX/(PLACEHOLDER)*
+Assets/SFX/05 Super Mario*
 Builds/*
 CFXR.WelcomeScreen.csproj
 CFXRDemo.csproj
@@ -27,3 +37,8 @@ Assets/Plugins/Demigiant.meta
 3DMovement.sln
 Assembly-CSharp.csproj
 Assembly-CSharp-firstpass.csproj
+Assets/FlexibleCelShader.meta
+Assets/Scripts/EndGame.cs.meta
+Assets/Scripts/EndGame.cs
+Assets/Scripts/Util/GameTimer.cs
+Assets/Scripts/Util/GameTimer.cs.meta

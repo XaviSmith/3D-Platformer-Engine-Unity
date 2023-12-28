@@ -8,14 +8,13 @@ namespace Platformer
     {
         [SerializeField] Transform spawnPoint;
 
-        //For if we want it to automatically 
         private void Awake()
         {
             if(GameManager.Instance == null)
             {
                 Debug.LogError("NO GAME MANAGER INSTANCE! Make sure GameManager comes before this in script execution order!");
             }
-            GameManager.Instance.AddPlayer(this);
+            GameManager.Instance.AddPlayer(this); //Done in awake in case anything needs to reference this
         }
 
         void OnEnable()

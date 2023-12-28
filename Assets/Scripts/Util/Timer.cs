@@ -89,25 +89,31 @@ namespace Utils
             }
         }
 
-        /// <summary>
-        /// Stopwatch, inherits from Timer. InitialTime is 0, Time is how long we've been running for.
-        /// </summary>
-        public class StopwatchTimer : Timer
+    /// <summary>
+    /// Stopwatch, inherits from Timer. InitialTime is 0, Time is how long we've been running for.
+    /// </summary>
+    public class StopwatchTimer : Timer
+    {
+        //Constructor
+        public StopwatchTimer(float value) : base(0) { }
+
+        public override void Tick(float deltaTime)
         {
-            //Constructor
-            public StopwatchTimer(float value) : base(0) { }
-
-            public override void Tick(float deltaTime)
+            if (IsRunning)
             {
-                if (IsRunning)
-                {
-                    Time += deltaTime;
-                }
+                Time += deltaTime;
             }
-
-            public void Reset() => Time = 0;
-
-            public float GetTime() => Time;
         }
+
+        public void Reset() => Time = 0;
+
+        public float GetTime() => Time;
+
+        public string GetFormattedTime(){
+            float time = Time <= 86399 ? Time : 86399; //prevent overflows
+            TimeSpan t = TimeSpan.FromSeconds(time);
+            return t.ToString(@"hh\:mm\:ss");
+        }
+    }
 }
 

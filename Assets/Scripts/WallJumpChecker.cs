@@ -12,6 +12,7 @@ public class WallJumpChecker : MonoBehaviour
     public bool IsTouchingWall { get; set; }
     [SerializeField] Transform origin;
     [SerializeField] float wallCastDistance = 0.08f; //How far to spherecast to detect ground
+    [SerializeField] Vector3 hitboxSize = Vector3.one;
     [SerializeField] Vector3 offset;
     [SerializeField] float checkRadius;
     [SerializeField] Collider _collider;
@@ -25,23 +26,9 @@ public class WallJumpChecker : MonoBehaviour
     bool CheckWallCast()
     {
         RaycastHit hit;
-        /*
-        Vector3 castCenter = origin.position + offset + (origin.forward * wallCastDistance);
-        //Cast the sphere towards the front of the player 
-        Collider[] hits = Physics.OverlapSphere(castCenter, checkRadius, wallLayers);
 
-        if(hits.Length > 0)
-        {
-            wallDirection = hits[0].ClosestPoint(castCenter);
-            wallDirection.y = castCenter.y;
-            Debug.Log("WALL DIRECTION: " + wallDirection);
-            return true;
-        }
-
-        wallDirection = Vector3.zero;
-        return false;
-        */
-        bool hitWall = Physics.SphereCast(origin.position + offset, checkRadius, origin.forward, out hit, wallCastDistance, wallLayers);
+        //bool hitWall = Physics.SphereCast(origin.position + offset, checkRadius, origin.forward, out hit, wallCastDistance, wallLayers); //spherecast version
+        bool hitWall = Physics.BoxCast(origin.position, hitboxSize, origin.forward, out hit, Quaternion.identity, wallCastDistance, wallLayers); //switched to boxcast for consistency
         WallNormal = hitWall ? hit.normal.normalized : Vector3.zero;
         return hitWall;
     }
@@ -56,7 +43,7 @@ public class WallJumpChecker : MonoBehaviour
         if(drawWallCheck)
         {
             Gizmos.color = Color.blue;
-            Gizmos.DrawLine(origin.position + offset + origin.forward * wallCastDistance + (origin.forward * checkRadius), origin.position + offset + (origin.forward * checkRadius));
+            //Gizmos.DrawLine(origin.position + offset + origin.forward * wallCastDistance + (origin.forward * checkRadius), origin.position + offset + (origin.forward * checkRadius)); //spherecast line
 
             if (drawWallNormal && WallNormal != Vector3.zero)
             {
@@ -68,7 +55,7 @@ public class WallJumpChecker : MonoBehaviour
 
             //Gizmos.DrawWireSphere(origin.position + offset + (origin.forward * wallCastDistance), checkRadius);
 
-            Gizmos.DrawWireSphere(origin.position + offset + (origin.forward * wallCastDistance), checkRadius);
+            Gizmos.DrawWireCube(origin.position + offset + (origin.forward * wallCastDistance), new Vector3(hitboxSize.x * 2, hitboxSize.y * 2, hitboxSize.z * 2));
         }
         
     }

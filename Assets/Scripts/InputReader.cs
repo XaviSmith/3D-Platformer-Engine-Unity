@@ -28,6 +28,7 @@ namespace Platformer
         public event UnityAction Attack = delegate { };
         public event UnityAction ResetCamera = delegate { };
         public event UnityAction Pause = delegate { };
+        public event UnityAction<Vector2> Navigate = delegate { }; //Added a navigate to Player Action map for simplicity and to not check every frame with a Pass-through action
 
         PlayerInputActions inputActions;
        
@@ -140,6 +141,16 @@ namespace Platformer
             }
             
         }
+
+        public void OnNavigate(InputAction.CallbackContext context)
+        {
+            if(context.phase == InputActionPhase.Started)
+            {
+                Navigate.Invoke(context.ReadValue<Vector2>());
+            }
+            
+        }
+
     }
 }
 

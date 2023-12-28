@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Platformer
 {
@@ -12,6 +13,11 @@ namespace Platformer
         public int Score { get; private set; }
         public int StarCount { get; private set; }
         public int CoinCount { get; private set; }
+        public GameTimer gameTimer;
+        public PlayerController GetPlayerController => MainPlayer?.GetComponent<PlayerController>();
+        public OrbitCamera currCamera;
+
+        public bool HideTexts;
 
         void Awake()
         {
@@ -45,6 +51,12 @@ namespace Platformer
             EventManager<int>.StartListening(Events.GETCOIN.ToString(), GetCoin);
         }
 
+        private void OnDisable()
+        {
+            //EventManager<int>.StartListening(Events.UPDATESCORE.ToString(), AddScore);
+            EventManager<int>.StopListening(Events.GETSTAR.ToString(), GetStar);
+            EventManager<int>.StopListening(Events.GETCOIN.ToString(), GetCoin);
+        }
         public void AddScore(int score)
         {
             Score += score;
@@ -61,6 +73,7 @@ namespace Platformer
             CoinCount += val;
             EventManager<int>.TriggerEvent(Events.UPDATECOIN.ToString(), CoinCount);
         }
+
     }
 
 }

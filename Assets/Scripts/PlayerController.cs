@@ -5,6 +5,7 @@ using Cinemachine;
 using MyBox;
 using Utils;
 
+//Extended from git-amend's basic tutorial here https://youtu.be/--_CH5DYz0M?si=jgfx6KJpbuye1jUH 
 namespace Platformer
 {
     public class PlayerController : MonoBehaviour

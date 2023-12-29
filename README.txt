@@ -1,4 +1,4 @@
-3D Platformer with fluid movement made in Unity following SOLID principles using C#, Probuilder and State Machines.
+Code for 3D Platformer with fluid movement made in Unity following SOLID principles using C#, Probuilder and State Machines.
 
 Features
 -Highly customizable with everything from jump height to attack hitboxes editable in inspector
@@ -9,16 +9,13 @@ Features
 
 Software Used: BFXR, Unity, Visual Studio
 
+NOTE: This repository is only meant to show code and not compile, as such packages, music, and materials have not been included to save space.
+
 PACKAGES REQUIRED (All packages are free): Cartoon Remaster VFX (Free ver)
 	  DOTween (Free ver)	  
 	  Probuilder
 	  Text Mesh Pro
 	  Flexible Cel Shader
-
-RESOURCES: 	
-	 	
-FLOW: 
-SPAWNERS - See EntitySpawner.
 
 REFERENCES
 Camera Movement - https://catlikecoding.com/unity/tutorials/movement/orbit-camera/

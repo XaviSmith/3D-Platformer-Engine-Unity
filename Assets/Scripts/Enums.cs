@@ -15,9 +15,12 @@ public class Enums { }
         GETCOIN,
         UPDATESTAR,
         UPDATECOIN,
-        PLAYERDIE
+        PLAYERDIE,
+        ENDGAME
     }
 
 [System.Serializable]
 public enum ColliderState { INACTIVE, ACTIVE, COLLIDING }
+
+public enum GemColours { BRONZE, SILVER, GOLD, PLAT}
 

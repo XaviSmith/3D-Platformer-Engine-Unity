@@ -10,6 +10,7 @@ namespace Platformer
         public static GameManager Instance { get; private set; }
         List<PlayerManager> Players { get; set; } = new List<PlayerManager>();
         public Transform MainPlayer { get; private set; }
+        [SerializeField] int starsNeeded;
         public int Score { get; private set; }
         public int StarCount { get; private set; }
         public int CoinCount { get; private set; }
@@ -66,6 +67,11 @@ namespace Platformer
         {
             StarCount += val;
             EventManager<int>.TriggerEvent(Events.UPDATESTAR.ToString(), StarCount);
+
+            if(StarCount >= starsNeeded)
+            {
+                EventManager.TriggerEvent(Events.ENDGAME.ToString());
+            }
         }
 
         public void GetCoin(int val)

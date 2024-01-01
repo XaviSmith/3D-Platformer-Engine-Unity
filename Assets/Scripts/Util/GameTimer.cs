@@ -7,7 +7,7 @@ namespace Platformer
 {
     public class GameTimer : MonoBehaviour
     {
-        public StopwatchTimer gameTimer;
+        StopwatchTimer gameTimer;
         bool showTimer;
         [SerializeField] TMPro.TextMeshProUGUI tmPro;
 

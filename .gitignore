@@ -40,5 +40,3 @@ Assembly-CSharp-firstpass.csproj
 Assets/FlexibleCelShader.meta
 Assets/Scripts/EndGame.cs.meta
 Assets/Scripts/EndGame.cs
-Assets/Scripts/Util/GameTimer.cs
-Assets/Scripts/Util/GameTimer.cs.meta

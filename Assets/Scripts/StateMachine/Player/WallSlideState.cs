@@ -5,7 +5,8 @@ using Platformer;
 
 public class WallSlideState : BaseState
 {
-    public WallSlideState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
+    protected readonly PlayerSounds playerSounds; 
+    public WallSlideState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles) { this.playerSounds = _playerSounds; }
 
     public override void OnEnter()
     {
@@ -13,6 +14,7 @@ public class WallSlideState : BaseState
         animator.CrossFade(WallSlideHash, CROSSFADEDURATION);
         player.SetDiveFlag(false);
         particles.ToggleRunFX(true);
+        playerSounds.PlaySound(playerSounds.WallSlideSound, true);
     }
 
     public override void FixedUpdate()
@@ -23,6 +25,7 @@ public class WallSlideState : BaseState
     public override void OnExit()
     {
         base.OnExit();
+        playerSounds.StopSound();
         player.FlipDirectionFromWall();
         particles.ToggleRunFX(false);
     }

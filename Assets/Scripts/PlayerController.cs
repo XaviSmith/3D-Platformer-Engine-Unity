@@ -21,6 +21,7 @@ namespace Platformer
         [SerializeField] CinemachineFreeLook freeLookVCam;
         [SerializeField] InputReader input;
         [SerializeField] PlayerParticles particles;
+        [SerializeField] PlayerSounds playerSounds;
 
         [Header("Movement Settings")]
         [SerializeField] float moveSpeed = 6f;
@@ -139,9 +140,9 @@ namespace Platformer
             JumpState jumpState = new JumpState(this, animator, particles);
             BounceState bounceState = new BounceState(this, animator, particles);
             FallState fallState = new FallState(this, animator);
-            WallSlideState wallSlideState = new WallSlideState(this, animator, particles);
-            WallJumpState wallJumpState = new WallJumpState(this, animator, particles);
-            DashState dashState = new DashState(this, animator, particles);
+            WallSlideState wallSlideState = new WallSlideState(this, animator, particles, playerSounds);
+            WallJumpState wallJumpState = new WallJumpState(this, animator, particles, playerSounds);
+            DashState dashState = new DashState(this, animator, particles, playerSounds);
             DashJumpState dashJumpState = new DashJumpState(this, animator, particles);
             AttackState attackState = new AttackState(this, animator);
             DiveState diveState = new DiveState(this, animator, particles);

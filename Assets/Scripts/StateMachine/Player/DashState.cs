@@ -5,7 +5,8 @@ using Platformer;
 
 public class DashState : BaseState
 {
-    public DashState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
+    PlayerSounds playerSounds;
+    public DashState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles) { this.playerSounds = _playerSounds; }
 
     //On Enter start the jump animation
     public override void OnEnter()
@@ -13,6 +14,7 @@ public class DashState : BaseState
         base.OnEnter();
         animator.CrossFade(DashHash, CROSSFADEDURATION);
         player.DashAttack();
+        playerSounds.PlaySound(playerSounds.SlideSound);
         particles.ToggleRunFX(true);
     }
 
@@ -32,6 +34,7 @@ public class DashState : BaseState
     public override void OnExit()
     {
         base.OnExit();
+        playerSounds.StopSound();
         particles.ToggleRunFX(false);
     }
 }

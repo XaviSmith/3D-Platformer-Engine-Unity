@@ -5,11 +5,13 @@ using Platformer;
 
 public class WallJumpState : BaseState
 {
-    public WallJumpState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
+    PlayerSounds playerSounds;
+    public WallJumpState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles) { this.playerSounds = _playerSounds; }
 
     public override void OnEnter()
     {
         base.OnEnter();
+        playerSounds.PlaySound(playerSounds.WallJumpSound);
         animator.CrossFade(WallJumpHash, CROSSFADEDURATION);
         particles.PlayJumpFX();
     }

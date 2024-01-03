@@ -27,7 +27,9 @@ namespace Platformer
         public void InvertYAxis(bool val) => invertYAxis = val;
 
         [SerializeField] float realignTime = 0.2f; //how long do we take to realign the camera for auto-aligns
+        [SerializeField] float defaultCameraZoneLerpTime = 0.5f;
         [SerializeField] Vector3 offset;
+        
         [SerializeField, Range(1f, 200f)] float distance;
         [SerializeField, Min(0f)] float focusRadius = 1f; //How much can the player move before we move the cam with them
         [SerializeField, Range(0f, 1f)] float focusSmoothing = 0.5f;
@@ -39,7 +41,13 @@ namespace Platformer
         Vector3 focusPoint; //Where we're looking
         Vector3 prevFocusPoint;
 
+        Vector2 prevOrientation = Vector2.zero;
         [SerializeField] Vector2 camOrientation = new Vector2(45f, 0f); //camera orientation. x is vertical (0 = straight, 90 = straight up), y is horizontal
+        [SerializeField] Vector2 cameraZoneOrientation = Vector2.zero; //for when we want specific camera angles in certain areas
+        
+        Vector2 CurrOrientation => camOrientation;
+        bool lerpCameraZone;
+
         [SerializeField, Range(-89f, 89f)] float minVerticalAngle = -30f; 
         [SerializeField, Range(-89f, 89f)] float maxVerticalAngle = 60f;
         const float DeadZone = 0.001f;
@@ -52,6 +60,7 @@ namespace Platformer
         float lastManualRotationTime;
 
         CountdownTimer realignTimer;
+        CountdownTimer cameraRealignTimer;
 
         //mouse input
         bool isRMBPressed; //right mouse button;
@@ -66,7 +75,35 @@ namespace Platformer
                 halfExtends.z = 0f;
                 return halfExtends;
             }
-        } 
+        }
+
+        public void SetCameraZoneOrientation(Vector2 val, float lerpTime = -1f)
+        {
+            cameraZoneOrientation = val;
+            lerpCameraZone = true;
+            LerpCameraZone(lerpTime);
+        }
+
+        public void ResetCameraZoneOrientation()
+        {
+            //cameraZoneOrientation = Vector2.zero;
+            //isResetting = true;
+            //cameraRealignTimer.Start();
+            //ResetCam();
+        }
+
+        public void LerpCameraZone(float lerpTime)
+        {
+            prevOrientation = camOrientation;
+            if(lerpTime <= 0f)
+            {
+                lerpTime = defaultCameraZoneLerpTime;
+            }
+
+            cameraRealignTimer.Reset(lerpTime);
+            cameraRealignTimer.Start();
+            ResetCam();
+        }
 
         public void LockCamera()
         {
@@ -122,6 +159,7 @@ namespace Platformer
         void Start()
         {
             realignTimer = new CountdownTimer(realignTime);
+            cameraRealignTimer = new CountdownTimer(defaultCameraZoneLerpTime);
         }
 
         void OnEnableMouseControlCamera()
@@ -169,16 +207,24 @@ namespace Platformer
         //Reset Camera to behind the Player.
         void ResetCam()
         {
-            if(!realignTimer.IsRunning)
+            if(!realignTimer.IsRunning && !cameraRealignTimer.IsRunning)
             {
                 isResetting = false;
+                lerpCameraZone = false;
                 return;
             }
 
-            Quaternion currRotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(defaultOrientation.x, target.transform.eulerAngles.y, transform.rotation.z), 1 - realignTimer.Progress);
+            if(cameraRealignTimer.IsRunning)
+            {
+                Vector2 camDirection = Vector2.Lerp(prevOrientation, cameraZoneOrientation, 1 - cameraRealignTimer.Progress);
+                camOrientation = camDirection;
+            }
+            
+
+            Quaternion currRotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(cameraRealignTimer.IsRunning ? camOrientation.x : defaultOrientation.x, cameraRealignTimer.IsRunning ? camOrientation.y : target.transform.eulerAngles.y, transform.rotation.z), 1 - realignTimer.Progress);
             transform.SetPositionAndRotation(transform.position, currRotation);
-            camOrientation.x = defaultOrientation.x;
-            camOrientation.y = target.transform.eulerAngles.y;
+            camOrientation.x = cameraRealignTimer.IsRunning ? camOrientation.x : defaultOrientation.x;
+            camOrientation.y = cameraRealignTimer.IsRunning ?  camOrientation.y : target.transform.eulerAngles.y;
         }
 
         public void ResetCamOverride()
@@ -192,9 +238,10 @@ namespace Platformer
             if(!locked)
             {
                 realignTimer.Tick(Time.unscaledDeltaTime);
+                cameraRealignTimer.Tick(Time.unscaledDeltaTime);
                 targetPosition = target.position + offset;
                 UpdateFocusPoint();
-                if (isResetting)
+                if (isResetting || lerpCameraZone)
                 {
                     ResetCam();
                 }
@@ -206,10 +253,10 @@ namespace Platformer
 
                 Quaternion lookRotation;
 
-                if (isRotatingCamera || AutomaticRotation())
+                if (isRotatingCamera || AutomaticRotation() || lerpCameraZone)
                 {
                     ClampAngles();
-                    lookRotation = Quaternion.Euler(camOrientation);
+                    lookRotation = Quaternion.Euler(CurrOrientation);
                 }
                 else
                 {
@@ -350,7 +397,7 @@ namespace Platformer
             float rotationChange = rotationSpeed * Mathf.Min(Time.unscaledDeltaTime, movementDeltaSqr) * autoRotationSensitivity;
 
             //Smooth the rotation according to how much we have left to rotate
-            float angleDelta = Mathf.Abs(Mathf.DeltaAngle(camOrientation.y, headingAngle)); //How much rotation left
+            float angleDelta = Mathf.Abs(Mathf.DeltaAngle(CurrOrientation.y, headingAngle)); //How much rotation left
 
             if(angleDelta < alignSmoothRange)
             {

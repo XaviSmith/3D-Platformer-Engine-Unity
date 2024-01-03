@@ -8,6 +8,8 @@ public class SoundManager : MonoBehaviour
 
     [SerializeField] AudioSource music;
     [SerializeField] AudioSource sfx;
+    float tempMusicVol = -1f;
+    Coroutine currCoroutine = null;
 
     void Awake()
     {
@@ -44,5 +46,44 @@ public class SoundManager : MonoBehaviour
     public void StopSFX()
     {
         sfx.Stop();
+    }
+
+    //Lower music volume for things like stars
+    public void LowerMusicVolume(float multiplier, float duration = -1f)
+    {
+        if(tempMusicVol < 0)
+        {
+            tempMusicVol = music.volume;
+        }
+        
+        music.volume = tempMusicVol * multiplier;
+
+        if(duration > 0f && currCoroutine == null)
+        {
+            currCoroutine = StartCoroutine(RestoreMusicVolumeCoroutine(duration));
+        } else if(duration < 0f)
+        {
+            if(currCoroutine != null)
+            {
+                StopCoroutine(currCoroutine);
+            }
+        }
+    }
+
+    public void RestoreMusicVolume()
+    {
+        if(tempMusicVol > 0f)
+        {
+            music.volume = tempMusicVol;
+            tempMusicVol = -1f;
+        }
+    }
+
+    IEnumerator RestoreMusicVolumeCoroutine(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+
+        RestoreMusicVolume();
+        currCoroutine = null;
     }
 }

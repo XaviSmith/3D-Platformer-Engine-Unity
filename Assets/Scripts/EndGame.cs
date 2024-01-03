@@ -66,6 +66,7 @@ public class EndGame : MonoBehaviour
         EndGameContainerObj.SetActive(true);
         gameManager.GetPlayerController.LockMovement();
         fader.FadeInAndOut();
+        SoundManager.Instance.LowerMusicVolume(0.5f);
 
         while (!fader.FadeInFinished)
         {

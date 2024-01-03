@@ -106,7 +106,8 @@ namespace Platformer
         //State Machine stuff
         StateMachine stateMachine;
         bool ShouldFall => !groundChecker.IsGrounded && !groundChecker.ShouldSnapToGround && !groundChecker.IsOnSlope && groundChecker.TimeSinceLastGrounded >= coyoteTime && !jumpTimer.IsRunning && !dashTimer.IsRunning;
-       
+        bool isGrounded => groundChecker.IsGrounded || groundChecker.IsOnSlope;
+
         //State Machine Helper methods, consider just moving this into the stateMachine class.
         void AddTransition(IState from, IState to, IPredicate condition) => stateMachine.AddTransition(from, to, condition);
         void AddAnyTransition(IState to, IPredicate condition) => stateMachine.AddAnyTransition(to, condition);
@@ -157,43 +158,44 @@ namespace Platformer
             //Define transitions
             AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning || jumpBufferTimer.IsRunning));
             AddTransition(locomotionState, attackState, new FuncPredicate(() => baseAttack.IsRunning));
-            AddTransition(locomotionState, dashState, new FuncPredicate(() => groundChecker.IsGrounded && dashTimer.IsRunning));
+            AddTransition(locomotionState, dashState, new FuncPredicate(() => isGrounded && dashTimer.IsRunning));
             AddTransition(locomotionState, fallState, new FuncPredicate(() => ShouldFall));
 
-            AddTransition(jumpState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
-            AddTransition(jumpState, landState, new FuncPredicate(() => (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !dashTimer.IsRunning && !jumpTimer.IsRunning));
+            AddTransition(jumpState, fallState, new FuncPredicate(() => !isGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddTransition(jumpState, landState, new FuncPredicate(() => isGrounded && !dashTimer.IsRunning && !jumpTimer.IsRunning));
 
-            AddTransition(landState, locomotionState, new FuncPredicate(() => (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !landStateTimer.IsRunning));
-            AddTransition(landState, fallState, new FuncPredicate(() => !(groundChecker.IsGrounded || groundChecker.IsOnSlope)));
+            AddTransition(landState, locomotionState, new FuncPredicate(() => isGrounded && !landStateTimer.IsRunning));
+            AddTransition(landState, fallState, new FuncPredicate(() => !isGrounded));
             AddTransition(landState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning || jumpBufferTimer.IsRunning));
 
             AddTransition(bounceState, fallState, new FuncPredicate(() => !bounceTimer.IsRunning));
-            AddTransition(bounceState, landState, new FuncPredicate(() => groundChecker.IsGrounded && !bounceTimer.IsRunning));
+            AddTransition(bounceState, landState, new FuncPredicate(() => isGrounded && !bounceTimer.IsRunning));
 
             AddTransition(fallState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && jumpVelocity <= 0f && !wallJumpTimer.IsRunning));
             AddTransition(fallState, diveState, new FuncPredicate(() => diveAttack.IsRunning));
-            AddTransition(fallState, landState, new FuncPredicate(() => (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !dashTimer.IsRunning));
+            AddTransition(fallState, landState, new FuncPredicate(() => isGrounded && !dashTimer.IsRunning));
 
-            AddTransition(diveState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
-            AddTransition(diveState, diveLandState, new FuncPredicate(() => groundChecker.IsGrounded || groundChecker.IsOnSlope));
+            AddTransition(diveState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !isGrounded));
+            AddTransition(diveState, diveLandState, new FuncPredicate(() => isGrounded));
 
             AddTransition(diveLandState, locomotionState, new FuncPredicate(() => !diveFlag && !diveLandTimer.IsRunning));
-            AddTransition(diveLandState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
+            AddTransition(diveLandState, fallState, new FuncPredicate(() => !isGrounded));
             AddTransition(diveLandState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
 
-            AddTransition(wallSlideState, wallJumpState, new FuncPredicate(() => !groundChecker.IsGrounded && wallJumpTimer.IsRunning));
-            AddTransition(wallSlideState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded || groundChecker.IsOnSlope));
+            AddTransition(wallSlideState, wallJumpState, new FuncPredicate(() => !isGrounded && wallJumpTimer.IsRunning));
+            AddTransition(wallSlideState, locomotionState, new FuncPredicate(() => isGrounded));
             AddTransition(wallSlideState, fallState, new FuncPredicate(() => wallSlideCancelTimer.IsRunning || (!wallJumpTimer.IsRunning && !wallJumpChecker.IsTouchingWall)));
 
             AddTransition(wallJumpState, fallState, new FuncPredicate(() => !jumpTimer.IsRunning && !wallJumpTimer.IsRunning));
-            AddTransition(wallJumpState, landState, new FuncPredicate(() => groundChecker.IsGrounded || groundChecker.IsOnSlope));
+            AddTransition(wallJumpState, landState, new FuncPredicate(() => isGrounded));
 
-            AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
+            AddTransition(dashState, locomotionState, new FuncPredicate(() => isGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, dashJumpState, new FuncPredicate(() => jumpTimer.IsRunning && dashTimer.IsRunning));
+            AddTransition(dashState, jumpState, new FuncPredicate(() => !isGrounded && !coyoteTimer.IsRunning)); //jumpState for momentum
 
             AddTransition(dashJumpState, diveState, new FuncPredicate(() => diveAttack.IsRunning));
-            AddTransition(dashJumpState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
-            AddTransition(dashJumpState, landState, new FuncPredicate(() => (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !jumpTimer.IsRunning));
+            AddTransition(dashJumpState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !isGrounded));
+            AddTransition(dashJumpState, landState, new FuncPredicate(() => isGrounded && !jumpTimer.IsRunning));
 
             AddTransition(attackState, locomotionState, new FuncPredicate(() => !baseAttack.IsRunning));
 
@@ -323,7 +325,7 @@ namespace Platformer
 
         void OnJump(bool performed)
         {
-            if(performed && !jumpTimer.IsRunning && !bounceTimer.IsRunning && !jumpCooldownTimer.IsRunning && (groundChecker.IsGrounded || coyoteTimer.IsRunning) && !diveLandLockoutTimer.IsRunning)
+            if(performed && !jumpTimer.IsRunning && !bounceTimer.IsRunning && !jumpCooldownTimer.IsRunning && (isGrounded || coyoteTimer.IsRunning) && !diveLandLockoutTimer.IsRunning)
             {
                 jumpTimer.Start();
             } else if(!performed) //We let go of the jump button early, shorthop
@@ -343,7 +345,7 @@ namespace Platformer
                 
             }
 
-            if(performed && !wallJumpTimer.IsRunning && wallJumpChecker.IsTouchingWall && !groundChecker.IsGrounded)
+            if(performed && !wallJumpTimer.IsRunning && wallJumpChecker.IsTouchingWall && !isGrounded)
             {
                 wallJumpTimer.Start();
             }
@@ -353,7 +355,7 @@ namespace Platformer
         {
             if(!dashTimer.IsRunning)
             {
-                if (performed && groundChecker.IsGrounded && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
+                if (performed && isGrounded && !dashCooldownTimer.IsRunning && movement.magnitude > 0)
                 {
                     dashTimer.Start();
                     dashAttack.StartAttack();
@@ -365,7 +367,7 @@ namespace Platformer
         void OnAttack()
         {
             //ground Attack
-            if(groundChecker.IsGrounded)
+            if(isGrounded)
             {
                 //Slide attack
                 if(movement.magnitude > 0)
@@ -517,12 +519,12 @@ namespace Platformer
                 HandleVerticalMovement();
             }
 
-            if(!groundChecker.IsGrounded && !groundChecker.IsOnSlope && !jumpTimer.IsRunning && !coyoteTimer.IsRunning)
+            if(!isGrounded && !jumpTimer.IsRunning && !coyoteTimer.IsRunning)
             {
                 coyoteTimer.Start();
             }
 
-            if(coyoteTimer.IsRunning && (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !jumpTimer.IsRunning)
+            if(coyoteTimer.IsRunning && (isGrounded) && !jumpTimer.IsRunning)
             {
                 coyoteTimer.Stop();
             }
@@ -553,11 +555,11 @@ namespace Platformer
         {        
             if(!jumpTimer.IsRunning && !bounceTimer.IsRunning)
             {
-                if (groundChecker.IsGrounded || coyoteTimer.IsRunning)
+                if (isGrounded || coyoteTimer.IsRunning)
                 {
                     jumpVelocity = 0f;
                 }
-                else if(airDashLiftTimer.IsRunning && !groundChecker.IsGrounded) //beginning part of an airDash where we lift off a little
+                else if(airDashLiftTimer.IsRunning && !isGrounded) //beginning part of an airDash where we lift off a little
                 {
                     jumpVelocity = airDashLiftForce;
                 }
@@ -599,7 +601,7 @@ namespace Platformer
         public void HandleDashJump()
         {
             // If we're on the ground and not jumping, keep jump velocity at 0
-            if (!jumpTimer.IsRunning && groundChecker.IsGrounded)
+            if (!jumpTimer.IsRunning && isGrounded)
             {
                 jumpVelocity = 0f;
                 return;
@@ -659,15 +661,6 @@ namespace Platformer
       
         void HandleRotation(Vector3 adjustedDirection)
         {
-            if(!groundChecker.IsGrounded && !groundChecker.IsOnSlope)
-            {
-                //transform.rotation= new Quaternion(0f, transform.rotation.y, transform.rotation.z, transform.rotation.w);
-                //adjustedDirection = new Vector3(wallJumpTimer.IsRunning ? adjustedDirection.x : transform.forward.x, adjustedDirection.y, wallJumpTimer.IsRunning ? adjustedDirection.z : transform.forward.z);
-                //transform.LookAt(transform.position + adjustedDirection);
-                //return;
-            } 
-
-
             Quaternion targetRotation = Quaternion.FromToRotation(transform.position, transform.position + adjustedDirection);
 
             if(wallJumpTimer.IsRunning)
@@ -677,8 +670,6 @@ namespace Platformer
             {
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(adjustedDirection), rotationSpeed * Time.deltaTime);
             }
-
-            //transform.LookAt(transform.position + adjustedDirection); //Have player look where they're going
         }
 
         //For if we manually want to make the player look at something (e.g. during a cutscene)
@@ -691,7 +682,7 @@ namespace Platformer
         //Move the player
         void HandleHorizontalMovement(Vector3 adjustedDirection)
         {
-            if(!groundChecker.IsGrounded)
+            if(!isGrounded)
             {
                 StopRunSound();
 
@@ -699,9 +690,11 @@ namespace Platformer
                 return;
             }
            
-            if(groundChecker.ShouldSnapToGround) { Debug.Log("SNAPPING"); }
-            Vector3 velocity = adjustedDirection * moveSpeed * (groundChecker.ShouldSnapToGround ? (-transform.up * 2f).y : 1f) * dashVelocity * Time.fixedDeltaTime;
-            if(currSpeed > 0.8 && dashVelocity <= 1)
+            //if(groundChecker.ShouldSnapToGround) { Debug.Log("SNAPPING"); }
+            //Vector3 velocity = adjustedDirection * moveSpeed * (groundChecker.ShouldSnapToGround ? (-transform.up * 2f).y : 1f) * dashVelocity * Time.fixedDeltaTime;
+
+            Vector3 velocity = adjustedDirection * moveSpeed * dashVelocity * Time.fixedDeltaTime;
+            if (currSpeed > 0.8 && dashVelocity <= 1)
             {
                 if(!playingRunSound)
                 {
@@ -728,7 +721,7 @@ namespace Platformer
 
         public void HaltVerticalAirMomentum() //For airdashes since we don't want to rise or fall
         {
-            if(!groundChecker.IsGrounded)
+            if(!isGrounded)
             {
                 rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
             }

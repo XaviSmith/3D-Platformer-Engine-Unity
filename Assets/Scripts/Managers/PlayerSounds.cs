@@ -8,6 +8,7 @@ using UnityEngine;
 public class PlayerSounds : MonoBehaviour
 {
     [SerializeField] AudioSource audioSource;
+    [SerializeField] AudioSource runAudioSource; //Separate audio source since having it start/stop with the others causes problems 
     public AudioClip RunSound;
     public AudioClip JumpSound;
     public AudioClip BounceSound;
@@ -20,15 +21,49 @@ public class PlayerSounds : MonoBehaviour
 
     public void PlaySound(AudioClip clip, bool loop = false)
     {
-        audioSource.clip = clip;
-        audioSource.loop = loop;
+        if(clip == RunSound)
+        {
+            runAudioSource.clip = clip;
+            runAudioSource.loop = loop;
 
-        audioSource.Play();
+            runAudioSource.Play();
+        } else
+        {           
+            audioSource.loop = loop;
+
+            if(loop)
+            {
+                audioSource.clip = clip;
+                audioSource.Play();
+            } else
+            {
+                audioSource.PlayOneShot(clip);
+            }
+            
+        }
+        
     }
 
     public void StopSound()
     {
         audioSource.Stop();
+    }
+
+    public void StopRunSound()
+    {
+        runAudioSource.Stop();
+    }
+
+    public void PauseSound()
+    {
+        audioSource.Pause();
+        runAudioSource.Pause();
+    }
+
+    public void UnPauseSound()
+    {
+        audioSource.UnPause();
+        runAudioSource.UnPause();
     }
 
 }

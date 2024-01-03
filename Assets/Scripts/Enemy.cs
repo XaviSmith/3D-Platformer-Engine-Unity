@@ -21,6 +21,7 @@ namespace Platformer
         [SerializeField] protected float deathTime;
         [SerializeField] protected Vector3 deathDirection;
         [SerializeField] protected float deathMoveSpeed;
+        [SerializeField] protected AudioClip deathSFX;
         [SerializeField] protected GameObject deathVFX;
         [SerializeField] protected float deathCollisionRadius = 0.5f; //When we're dead check a sphere within this radius to see if we hit something. If we did, explode early.
         [SerializeField] protected Vector3 deathColliderOffset = Vector3.zero;
@@ -56,7 +57,8 @@ namespace Platformer
 
             deathTimer.OnTimerStop += () =>
             {
-                DieVFX();
+                DieSFX();
+                DieVFX();             
             };
 
             //************State machine************
@@ -115,6 +117,14 @@ namespace Platformer
                 deathTimer.Start();
             }
             
+        }
+
+        public void DieSFX()
+        {
+            if(deathSFX != null)
+            {
+                SoundManager.Instance.PlaySFX(deathSFX);
+            }
         }
 
         public void DieVFX()

@@ -26,6 +26,15 @@ namespace Platformer
         void OnPause()
         {
             IsPaused = !IsPaused;
+
+            if(IsPaused)
+            {
+                EventManager.TriggerEvent(Events.PAUSED.ToString());
+            } else
+            {
+                EventManager.TriggerEvent(Events.UNPAUSED.ToString());
+            }
+
             Time.timeScale = IsPaused ? 0 : 1;
             menu.SetActive(IsPaused);
         }

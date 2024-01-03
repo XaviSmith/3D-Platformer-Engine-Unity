@@ -16,7 +16,9 @@ public class Enums { }
         UPDATESTAR,
         UPDATECOIN,
         PLAYERDIE,
-        ENDGAME
+        ENDGAME,
+        PAUSED,
+        UNPAUSED
     }
 
 [System.Serializable]

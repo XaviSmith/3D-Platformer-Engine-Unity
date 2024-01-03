@@ -11,7 +11,7 @@ namespace Platformer
         public override void OnEnter()
         {
             base.OnEnter();
-            enemy.DieVFX();          
+            enemy.DieVFX();        //We don't play dieSFX since the bounce sound will already play   
             animator.CrossFade(DieHash, CROSSFADEDURATION);
         }
 

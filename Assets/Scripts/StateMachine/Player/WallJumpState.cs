@@ -5,8 +5,7 @@ using Platformer;
 
 public class WallJumpState : BaseState
 {
-    PlayerSounds playerSounds;
-    public WallJumpState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles) { this.playerSounds = _playerSounds; }
+    public WallJumpState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles, _playerSounds) { }
 
     public override void OnEnter()
     {

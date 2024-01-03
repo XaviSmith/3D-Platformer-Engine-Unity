@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Platformer;
 
 public class InstructionTrigger : MonoBehaviour
 {
@@ -12,7 +13,11 @@ public class InstructionTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        FadeIn();
+        if(!GameManager.Instance.HideTexts)
+        {
+            FadeIn();
+        }
+        
     }
 
     private void OnTriggerExit(Collider other)

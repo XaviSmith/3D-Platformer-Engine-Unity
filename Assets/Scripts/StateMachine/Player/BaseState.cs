@@ -12,10 +12,12 @@ public abstract class BaseState : IState
     protected readonly PlayerController player;
     protected readonly Animator animator;
     protected readonly PlayerParticles particles;
+    protected readonly PlayerSounds playerSounds;
 
     //Animation Hashes
     protected static readonly int LocomotionHash = Animator.StringToHash("Locomotion");
     protected static readonly int JumpHash = Animator.StringToHash("Jump");
+    protected static readonly int LandHash = Animator.StringToHash("Land");
     protected static readonly int DiveHash = Animator.StringToHash("Dive");
     protected static readonly int DiveLandHash = Animator.StringToHash("DiveLand");
     protected static readonly int FallHash = Animator.StringToHash("Fall");
@@ -26,11 +28,12 @@ public abstract class BaseState : IState
 
     protected const float CROSSFADEDURATION = 0.1f;
 
-    protected BaseState(PlayerController _player, Animator _animator, PlayerParticles _particles = null)
+    protected BaseState(PlayerController _player, Animator _animator, PlayerParticles _particles = null, PlayerSounds _playerSounds = null)
     {
         this.player = _player;
         this.animator = _animator;
         this.particles = _particles;
+        this.playerSounds = _playerSounds;
     }
 
     public virtual void OnEnter()

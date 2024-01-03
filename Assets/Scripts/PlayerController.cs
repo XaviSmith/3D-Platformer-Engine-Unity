@@ -12,7 +12,6 @@ namespace Platformer
     {
         public static Transform Transform { get; private set; } //We can move this to GameManager and add players to a list if we decide to have multiple, but this is good enough for now.
         [SerializeField] bool canMove = true;
-
         [Header("References")]
         [SerializeField] Rigidbody rb;
         [SerializeField] GroundChecker groundChecker;
@@ -30,6 +29,8 @@ namespace Platformer
         [SerializeField] float rotationSpeed = 15f;
         [SerializeField] float smoothTime = 0.2f; //how fast the animator changes speed
 
+        bool playingRunSound;
+
         [Header("Jump Settings")]
         [SerializeField] float jumpForce = 10f;
         [SerializeField] float bounceForce = 10f; //for when we bounce off things
@@ -40,6 +41,7 @@ namespace Platformer
         [SerializeField] float gravityMultiplier = 1f; //for if we want to bring them to the ground faster or slower. NOTE: It's generally better to change the overall gravity for tweaks since this won't affect speed falling off a platform     
         [SerializeField] float coyoteTime = 0.2f;
         [SerializeField] float jumpBuffer = 0.5f;
+        [SerializeField] float landStateDuration = 0.458f;
 
         [Header("Wall Jump Settings")]
         [SerializeField] float wallSlideSpeed = 1f;
@@ -59,6 +61,7 @@ namespace Platformer
         [SerializeField] float airDashLiftTime = 0.1f;
         [SerializeField] Vector2 airDashForce = new Vector2(10f, -2f); //x axis is horizontal movement, y axis is vertical movement
         [SerializeField] float diveLandStateDuration = 1f;
+        [SerializeField] float diveLandSoundDuration = 1f;
         [SerializeField] float diveLandLockout = 0.1f; //How long after diving before we can regain movement
 
         bool diveFlag = false;
@@ -87,6 +90,7 @@ namespace Platformer
         CountdownTimer jumpCooldownTimer; //if we want a cooldown on how long after landing before we can jump again.
         CountdownTimer coyoteTimer;
         CountdownTimer jumpBufferTimer;
+        CountdownTimer landStateTimer;
 
         CountdownTimer wallJumpTimer;
         CountdownTimer wallSlideCancelTimer;
@@ -97,6 +101,7 @@ namespace Platformer
         CountdownTimer airDashLiftTimer;
         CountdownTimer diveLandTimer;
         CountdownTimer diveLandLockoutTimer;
+        CountdownTimer diveLandSoundTimer;
 
         //State Machine stuff
         StateMachine stateMachine;
@@ -137,43 +142,62 @@ namespace Platformer
 
             //Declare States
             LocomotionState locomotionState = new LocomotionState(this, animator, particles);
-            JumpState jumpState = new JumpState(this, animator, particles);
-            BounceState bounceState = new BounceState(this, animator, particles);
+            JumpState jumpState = new JumpState(this, animator, particles, playerSounds);
+            BounceState bounceState = new BounceState(this, animator, particles, playerSounds);
             FallState fallState = new FallState(this, animator);
+            LandState landState = new LandState(this, animator, particles, playerSounds);
             WallSlideState wallSlideState = new WallSlideState(this, animator, particles, playerSounds);
             WallJumpState wallJumpState = new WallJumpState(this, animator, particles, playerSounds);
             DashState dashState = new DashState(this, animator, particles, playerSounds);
-            DashJumpState dashJumpState = new DashJumpState(this, animator, particles);
+            DashJumpState dashJumpState = new DashJumpState(this, animator, particles, playerSounds);
             AttackState attackState = new AttackState(this, animator);
-            DiveState diveState = new DiveState(this, animator, particles);
-            DiveLandState diveLandState = new DiveLandState(this, animator, particles);
+            DiveState diveState = new DiveState(this, animator, particles, playerSounds);
+            DiveLandState diveLandState = new DiveLandState(this, animator, particles, playerSounds);
 
             //Define transitions
             AddTransition(locomotionState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning || jumpBufferTimer.IsRunning));
             AddTransition(locomotionState, attackState, new FuncPredicate(() => baseAttack.IsRunning));
             AddTransition(locomotionState, dashState, new FuncPredicate(() => groundChecker.IsGrounded && dashTimer.IsRunning));
             AddTransition(locomotionState, fallState, new FuncPredicate(() => ShouldFall));
-            AddTransition(jumpState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !jumpTimer.IsRunning));
+
             AddTransition(jumpState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !jumpTimer.IsRunning && !dashTimer.IsRunning));
+            AddTransition(jumpState, landState, new FuncPredicate(() => (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !dashTimer.IsRunning && !jumpTimer.IsRunning));
+
+            AddTransition(landState, locomotionState, new FuncPredicate(() => (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !landStateTimer.IsRunning));
+            AddTransition(landState, fallState, new FuncPredicate(() => !(groundChecker.IsGrounded || groundChecker.IsOnSlope)));
+            AddTransition(landState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning || jumpBufferTimer.IsRunning));
+
             AddTransition(bounceState, fallState, new FuncPredicate(() => !bounceTimer.IsRunning));
+            AddTransition(bounceState, landState, new FuncPredicate(() => groundChecker.IsGrounded && !bounceTimer.IsRunning));
+
             AddTransition(fallState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && jumpVelocity <= 0f && !wallJumpTimer.IsRunning));
             AddTransition(fallState, diveState, new FuncPredicate(() => diveAttack.IsRunning));
+            AddTransition(fallState, landState, new FuncPredicate(() => (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !dashTimer.IsRunning));
+
             AddTransition(diveState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
             AddTransition(diveState, diveLandState, new FuncPredicate(() => groundChecker.IsGrounded || groundChecker.IsOnSlope));
+
             AddTransition(diveLandState, locomotionState, new FuncPredicate(() => !diveFlag && !diveLandTimer.IsRunning));
             AddTransition(diveLandState, fallState, new FuncPredicate(() => !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
             AddTransition(diveLandState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning));
+
             AddTransition(wallSlideState, wallJumpState, new FuncPredicate(() => !groundChecker.IsGrounded && wallJumpTimer.IsRunning));
+            AddTransition(wallSlideState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded || groundChecker.IsOnSlope));
             AddTransition(wallSlideState, fallState, new FuncPredicate(() => wallSlideCancelTimer.IsRunning || (!wallJumpTimer.IsRunning && !wallJumpChecker.IsTouchingWall)));
+
             AddTransition(wallJumpState, fallState, new FuncPredicate(() => !jumpTimer.IsRunning && !wallJumpTimer.IsRunning));
+            AddTransition(wallJumpState, landState, new FuncPredicate(() => groundChecker.IsGrounded || groundChecker.IsOnSlope));
+
             AddTransition(dashState, locomotionState, new FuncPredicate(() => groundChecker.IsGrounded && !dashTimer.IsRunning));
-            AddTransition(dashState, jumpState, new FuncPredicate(() => !groundChecker.IsGrounded && !dashTimer.IsRunning));
             AddTransition(dashState, dashJumpState, new FuncPredicate(() => jumpTimer.IsRunning && dashTimer.IsRunning));
+
             AddTransition(dashJumpState, diveState, new FuncPredicate(() => diveAttack.IsRunning));
             AddTransition(dashJumpState, wallSlideState, new FuncPredicate(() => wallJumpChecker.IsTouchingWall && !wallJumpTimer.IsRunning && !groundChecker.IsGrounded && !groundChecker.IsOnSlope));
+            AddTransition(dashJumpState, landState, new FuncPredicate(() => (groundChecker.IsGrounded || groundChecker.IsOnSlope) && !jumpTimer.IsRunning));
+
             AddTransition(attackState, locomotionState, new FuncPredicate(() => !baseAttack.IsRunning));
 
-            AddAnyTransition(locomotionState, new FuncPredicate(() => !canMove || ( groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !bounceTimer.IsRunning && !dashTimer.IsRunning && !diveFlag && !diveLandTimer.IsRunning)));
+            AddAnyTransition(locomotionState, new FuncPredicate(() => !canMove)); // || ( groundChecker.IsGrounded && !baseAttack.IsRunning && !jumpTimer.IsRunning && !bounceTimer.IsRunning && !dashTimer.IsRunning && !diveFlag && !diveLandTimer.IsRunning && !landStateTimer.IsRunning)));
             AddAnyTransition(bounceState, new FuncPredicate(() => bounceTimer.IsRunning));
             //set initial state
             stateMachine.SetState(locomotionState);
@@ -185,12 +209,14 @@ namespace Platformer
             jumpTimer = new CountdownTimer(jumpDuration);
             bounceTimer = new CountdownTimer(bounceDuration);
             jumpCooldownTimer = new CountdownTimer(jumpCooldown);
+            landStateTimer = new CountdownTimer(landStateDuration);
             coyoteTimer = new CountdownTimer(coyoteTime);
             jumpBufferTimer = new CountdownTimer(jumpBuffer);
             dashTimer = new CountdownTimer(dashDuration);
             airDashLiftTimer = new CountdownTimer(airDashLiftTime);
             diveLandTimer = new CountdownTimer(diveLandStateDuration);
             diveLandLockoutTimer = new CountdownTimer(diveLandLockout);
+            diveLandSoundTimer = new CountdownTimer(diveLandSoundDuration);
             dashCooldownTimer = new CountdownTimer(dashCooldown);
             wallJumpTimer = new CountdownTimer(wallJumpDuration);
             wallSlideCancelTimer = new CountdownTimer(wallSlideLockout);
@@ -240,7 +266,22 @@ namespace Platformer
                 dashCooldownTimer.Start();
             };
 
-            timers = new List<Timer>(12) { jumpTimer, bounceTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer, wallJumpTimer, wallSlideCancelTimer, dashTimer, airDashLiftTimer, diveLandTimer, diveLandLockoutTimer, dashCooldownTimer}; //defining capacity for some optimization;
+            diveLandTimer.OnTimerStart += () =>
+            {
+                diveLandSoundTimer.Start();
+            };
+
+            diveLandTimer.OnTimerStop += () =>
+            {
+                diveLandSoundTimer.Stop();
+            };
+
+            diveLandSoundTimer.OnTimerStop += () =>
+            {
+                playerSounds.StopSound();
+            };
+
+            timers = new List<Timer>(14) { jumpTimer, bounceTimer, jumpCooldownTimer, coyoteTimer, jumpBufferTimer, landStateTimer, wallJumpTimer, wallSlideCancelTimer, dashTimer, airDashLiftTimer, diveLandTimer, diveLandLockoutTimer, diveLandSoundTimer, dashCooldownTimer}; //defining capacity for some optimization;
         }
         //*****************************Jumping (also see HandleJump lower down)*****************************
 
@@ -249,6 +290,9 @@ namespace Platformer
             input.Jump += OnJump;
             input.Dash += OnDash;
             input.Attack += OnAttack;
+
+            EventManager.StartListening(Events.PAUSED.ToString(), PauseRunAudio);
+            EventManager.StartListening(Events.UNPAUSED.ToString(), UnPauseRunAudio);
         }
 
         private void OnDisable()
@@ -256,6 +300,25 @@ namespace Platformer
             input.Jump -= OnJump;
             input.Dash -= OnDash;
             input.Attack -= OnAttack;
+
+            EventManager.StopListening(Events.PAUSED.ToString(), PauseRunAudio);
+            EventManager.StopListening(Events.UNPAUSED.ToString(), UnPauseRunAudio);
+        }
+
+        void PauseRunAudio()
+        {
+            playerSounds.PauseSound();
+        }
+
+        void UnPauseRunAudio()
+        {
+            playerSounds.UnPauseSound();
+        }
+
+        public void StopRunSound()
+        {
+            playingRunSound = false;
+            playerSounds.StopRunSound();
         }
 
         void OnJump(bool performed)
@@ -365,6 +428,22 @@ namespace Platformer
             dashJumpVelocity = 1f;
         }
 
+        public void StartLandStateTimer()
+        {
+            if (!landStateTimer.IsRunning)
+            {
+                landStateTimer.Start();
+            }
+        }
+
+        public void StopLandStateTimer()
+        {
+            if (landStateTimer.IsRunning)
+            {
+                landStateTimer.Stop();
+            }
+        }
+
         public void StartDiveLandTimers()
         {
             if(!diveLandTimer.IsRunning)
@@ -410,12 +489,11 @@ namespace Platformer
 
                 HandleTimers();
                 UpdateAnimator();
-            
         }
 
         private void FixedUpdate()
         {
-            stateMachine.FixedUpdate();           
+            stateMachine.FixedUpdate();
         }
 
         void HandleTimers()
@@ -553,6 +631,7 @@ namespace Platformer
 
             adjustedDirection = Vector3.ProjectOnPlane(adjustedDirection, groundChecker.CurrSlopeNormal);
             
+            
 
             //transform.rotation = Quaternion.LookRotation(Vector3.Cross(transform.right, groundChecker.currSlopeNormal));
 
@@ -566,6 +645,7 @@ namespace Platformer
             else
             {
                 SmoothSpeed(0);
+                StopRunSound();
 
                 //reset horizontal velocity so we can stop on a dime
                 rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
@@ -613,12 +693,24 @@ namespace Platformer
         {
             if(!groundChecker.IsGrounded)
             {
+                StopRunSound();
+
                 HandleAirMovement(adjustedDirection);
                 return;
             }
            
             if(groundChecker.ShouldSnapToGround) { Debug.Log("SNAPPING"); }
             Vector3 velocity = adjustedDirection * moveSpeed * (groundChecker.ShouldSnapToGround ? (-transform.up * 2f).y : 1f) * dashVelocity * Time.fixedDeltaTime;
+            if(currSpeed > 0.8 && dashVelocity <= 1)
+            {
+                if(!playingRunSound)
+                {
+                    playingRunSound = true;
+                    playerSounds.PlaySound(playerSounds.RunSound, true);
+                }
+                
+            }
+
             rb.velocity = new Vector3(velocity.x, rb.velocity.y, velocity.z);
         }
 

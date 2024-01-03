@@ -5,8 +5,7 @@ using Platformer;
 
 public class DashState : BaseState
 {
-    PlayerSounds playerSounds;
-    public DashState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles) { this.playerSounds = _playerSounds; }
+    public DashState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles, _playerSounds) { }
 
     //On Enter start the jump animation
     public override void OnEnter()

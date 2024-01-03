@@ -5,11 +5,13 @@ using Platformer;
 
 public class BounceState : BaseState
 {
-    public BounceState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
+    public BounceState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles, _playerSounds) { }
 
     //On Enter start the jump animation
     public override void OnEnter()
     {
+        playerSounds.PlaySound(playerSounds.BounceSound);
+        //playerSounds.PlaySound(playerSounds.JumpSound);
         base.OnEnter();
         animator.CrossFade(JumpHash, CROSSFADEDURATION);
         particles.PlayJumpFX();

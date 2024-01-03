@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using Platformer;
 
-public class LocomotionState : BaseState
+public class LandState : BaseState
 {
-    public LocomotionState(PlayerController _player, Animator _animator, PlayerParticles _particles) : base(_player, _animator, _particles) { }
+    public LandState(PlayerController _player, Animator _animator, PlayerParticles _particles, PlayerSounds _playerSounds) : base(_player, _animator, _particles, _playerSounds) { }
 
     public override void OnEnter()
     {
         base.OnEnter();
-        animator.CrossFade(LocomotionHash, CROSSFADEDURATION);
+        animator.CrossFade(LandHash, CROSSFADEDURATION);
+        player.StartLandStateTimer();
+        particles.PlayJumpFX();
         player.CheckJumpBuffer();
+        playerSounds.PlaySound(playerSounds.LandSound);
     }
 
     public override void Update()
@@ -28,8 +31,6 @@ public class LocomotionState : BaseState
     public override void OnExit()
     {
         base.OnExit();
-        player.StopRunSound();
-        particles.ToggleRunFX(false);
-        //player.StopCoyoteTime();
+        player.StopLandStateTimer();
     }
 }

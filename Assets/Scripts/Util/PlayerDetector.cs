@@ -8,6 +8,7 @@ using Utils;
 /// </summary>
 public class PlayerDetector : MonoBehaviour
 {
+    [SerializeField] bool drawGizmos;
     [SerializeField] float detectionAngle = 60f;
     [SerializeField] float detectionRadius = 10f;
     [SerializeField] float innerDetectionRadius = 3f; //For if we want to detect them when they're within a certain proximity
@@ -56,20 +57,24 @@ public class PlayerDetector : MonoBehaviour
     //For Cone Detection
     public void OnDrawGizmos()
     {
-        Gizmos.color = Color.red;
+        if(drawGizmos)
+        {
+            Gizmos.color = Color.red;
 
-        //Draw the detection radii
-        Gizmos.DrawWireSphere(transform.position, detectionRadius);
-        Gizmos.DrawWireSphere(transform.position, innerDetectionRadius);
+            //Draw the detection radii
+            Gizmos.DrawWireSphere(transform.position, detectionRadius);
+            Gizmos.DrawWireSphere(transform.position, innerDetectionRadius);
 
-        //calculate cone directions
-        Vector3 coneLeftLine = Quaternion.Euler(0, detectionAngle / 2, 0) * transform.forward * detectionRadius;
-        Vector3 coneRightLine = Quaternion.Euler(0, -detectionAngle / 2, 0) * transform.forward * detectionRadius;
+            //calculate cone directions
+            Vector3 coneLeftLine = Quaternion.Euler(0, detectionAngle / 2, 0) * transform.forward * detectionRadius;
+            Vector3 coneRightLine = Quaternion.Euler(0, -detectionAngle / 2, 0) * transform.forward * detectionRadius;
 
-        Gizmos.color = Color.blue;
+            Gizmos.color = Color.blue;
 
-        //Draw lines to represent the cone
-        Gizmos.DrawLine(transform.position, transform.position + coneLeftLine);
-        Gizmos.DrawLine(transform.position, transform.position + coneRightLine);
+            //Draw lines to represent the cone
+            Gizmos.DrawLine(transform.position, transform.position + coneLeftLine);
+            Gizmos.DrawLine(transform.position, transform.position + coneRightLine);
+        }
+        
     }
 }

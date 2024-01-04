@@ -45,7 +45,7 @@ namespace Platformer
         bool CheckSlope()
         {
             //We don't rotate the slope check to match player orientation otherwise it'd be useless
-            if (Physics.Raycast(transform.position - slopeOffset, Vector3.down, out slopeRaycast, slopeGroundDistance))
+            if (Physics.Raycast(transform.position - slopeOffset, Vector3.down, out slopeRaycast, slopeGroundDistance, groundLayers))
             {
                 
                 currSlopeAngle = Vector3.Angle(slopeRaycast.normal, Vector3.up);
@@ -70,27 +70,6 @@ namespace Platformer
         bool SnapToGround()
         {
             return IsOnSlope && !IsGrounded;
-            /*
-            if (FramesSinceLastGrounded > 5)
-            {
-                return false;
-            }
-
-            if(!Physics.Raycast(transform.position - CurrOffset, Vector3.down, out RaycastHit hit, snapCastDistance, groundLayers))
-            {
-                return false;
-            }
-
-            //Maybe remove this
-            if(hit.normal.y < minSlopeAngle)
-            {
-                return false;
-            }
-
-            currSlopeAngle = Vector3.Angle(hit.normal, Vector3.up);
-            IsGrounded = true;
-            return true;
-            */
         }
 
         // Update is called once per frame

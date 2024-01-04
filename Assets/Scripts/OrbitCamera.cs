@@ -42,9 +42,11 @@ namespace Platformer
         Vector3 prevFocusPoint;
 
         Vector2 prevOrientation = Vector2.zero;
+        Vector2 adjustedPrevOrientation;
         [SerializeField] Vector2 camOrientation = new Vector2(45f, 0f); //camera orientation. x is vertical (0 = straight, 90 = straight up), y is horizontal
         [SerializeField] Vector2 cameraZoneOrientation = Vector2.zero; //for when we want specific camera angles in certain areas
-        
+        Vector2 adjustedCameraZoneOrientation;
+
         Vector2 CurrOrientation => camOrientation;
         bool lerpCameraZone;
 
@@ -102,7 +104,66 @@ namespace Platformer
 
             cameraRealignTimer.Reset(lerpTime);
             cameraRealignTimer.Start();
-            ResetCam();
+
+            adjustedCameraZoneOrientation = cameraZoneOrientation;
+            adjustedPrevOrientation = prevOrientation;
+
+            AdjustLerpCameraZone(ref adjustedCameraZoneOrientation, ref adjustedPrevOrientation);
+
+            CameraZoneRealign();
+        }
+
+        //Adjust the vectors so we take the shortest rotation 
+        void AdjustLerpCameraZone(ref Vector2 _cameraZoneOrientation, ref Vector2 _previousOrientation)
+        {
+            float xDifference = _cameraZoneOrientation.x - prevOrientation.x; 
+
+            if(Mathf.Abs(xDifference) > 180)
+            {
+                if(xDifference < 0)
+                {
+                    _cameraZoneOrientation.x = _cameraZoneOrientation.x + 360;
+                } else if(xDifference > 0)
+                {
+                    _previousOrientation.x = _previousOrientation.x + 360;
+                }
+            }
+
+            float yDifference = _cameraZoneOrientation.y - prevOrientation.y;
+
+            if (Mathf.Abs(yDifference) > 180)
+            {
+                if (yDifference < 0)
+                {
+                    _cameraZoneOrientation.y = _cameraZoneOrientation.y + 360;
+                }
+                else if (yDifference > 0)
+                {
+                    _previousOrientation.y = _previousOrientation.y + 360;
+                }
+            }
+
+        }
+
+
+        //If given more time, Roll the common functionality of this and ResetCam into one LerpCamera(Vector2 a, Vector2 b, CountdownTimer timer)
+        void CameraZoneRealign()
+        {
+            if (!cameraRealignTimer.IsRunning)
+            {
+                lerpCameraZone = false;
+                return;
+            }
+
+            if (cameraRealignTimer.IsRunning)
+            {
+                //Find the shorter rotation direction
+                Vector2 camDirection = Vector2.Lerp(adjustedPrevOrientation, adjustedCameraZoneOrientation, 1 - cameraRealignTimer.Progress);
+                camOrientation = camDirection;
+            }
+
+            Quaternion currRotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(camOrientation.x, camOrientation.y, transform.rotation.z), 1 - cameraRealignTimer.Progress);
+            transform.SetPositionAndRotation(transform.position, currRotation);
         }
 
         public void LockCamera()
@@ -210,12 +271,12 @@ namespace Platformer
             if(!realignTimer.IsRunning && !cameraRealignTimer.IsRunning)
             {
                 isResetting = false;
-                lerpCameraZone = false;
                 return;
             }
 
             if(cameraRealignTimer.IsRunning)
-            {
+            {               
+                //Find the shorter rotation direction
                 Vector2 camDirection = Vector2.Lerp(prevOrientation, cameraZoneOrientation, 1 - cameraRealignTimer.Progress);
                 camOrientation = camDirection;
             }
@@ -241,10 +302,15 @@ namespace Platformer
                 cameraRealignTimer.Tick(Time.unscaledDeltaTime);
                 targetPosition = target.position + offset;
                 UpdateFocusPoint();
-                if (isResetting || lerpCameraZone)
+
+                if (lerpCameraZone)
+                {
+                    CameraZoneRealign();
+                }
+                else if (isResetting)
                 {
                     ResetCam();
-                }
+                } 
                 else
                 {
                     ManualRotation();
@@ -255,7 +321,11 @@ namespace Platformer
 
                 if (isRotatingCamera || AutomaticRotation() || lerpCameraZone)
                 {
-                    ClampAngles();
+                    if(!lerpCameraZone)
+                    {
+                        ClampAngles();
+                    }
+                    
                     lookRotation = Quaternion.Euler(CurrOrientation);
                 }
                 else

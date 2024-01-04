@@ -17,6 +17,7 @@ namespace Platformer
         public GameTimer gameTimer;
         public PlayerController GetPlayerController => MainPlayer?.GetComponent<PlayerController>();
         public OrbitCamera currCamera;
+        [SerializeField] float starJingleTime = 0.4f;
 
         public bool HideTexts;
 
@@ -65,6 +66,7 @@ namespace Platformer
 
         public void GetStar(int val)
         {
+            SoundManager.Instance.LowerMusicVolume(0.5f, starJingleTime);
             StarCount += val;
             EventManager<int>.TriggerEvent(Events.UPDATESTAR.ToString(), StarCount);
 

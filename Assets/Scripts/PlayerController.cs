@@ -244,10 +244,6 @@ namespace Platformer
             };
 
             bounceTimer.OnTimerStart += () => jumpVelocity = bounceForce;
-            //Debugs for if coyote time starts acting weird
-
-            //coyoteTimer.OnTimerStart += () => Debug.Log("COYOTE TIME STARTED");
-            //coyoteTimer.OnTimerStop += () => Debug.Log("COYOTE TIME STOPPED");
 
             wallJumpTimer.OnTimerStop += () => jumpVelocity = 0f;
 
@@ -530,17 +526,6 @@ namespace Platformer
             }
         }
 
-        //Shouldn't be called in normal play, but good to have a fallback
-        /*public void StopCoyoteTime()
-        {
-            if(coyoteTimer.IsRunning)
-            {
-                coyoteTimer.Stop();
-                Debug.LogWarning("Stop coyote time should not have been called here. Check your states!");
-            }
-            
-        }*/
-
         public void CheckJumpBuffer()
         {
             if(jumpBufferTimer.IsRunning)
@@ -734,17 +719,6 @@ namespace Platformer
             HandleRotation(adjustedDirection);
         }
 
-        /*public void ToggleRunFX(bool val)
-        {
-            if(val)
-            {
-                runFx.Play(true);
-            } else
-            {
-                runFx.Stop(true);
-            }
-            
-        }*/
 
         //*************************************************************************************************
 
@@ -758,11 +732,6 @@ namespace Platformer
             canMove = true;
         }
 
-        void OnDrawGizmos()
-        {
-            Gizmos.color = Color.blue;
-            //Gizmos.DrawLine(transform.position, transform.position + (transform.forward + (Quaternion.AngleAxis(mainCam.eulerAngles.y, Vector3.up) * movement)) * 12f);
-        }
     }
 }
 

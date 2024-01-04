@@ -10,14 +10,29 @@ public class Gem : MonoBehaviour
     [SerializeField] Material unlockedMaterial;
     [SerializeField] MeshRenderer mesh;
 
+    void Start()
+    {
+        LoadGem();
+    }
+
     public void Unlock()
     {
         unlocked = true;
         SetMaterial();
+
+        PlayerPrefs.SetInt(GemColour.ToString() + "_unlocked", 1);
     }
 
     public void SetMaterial()
     {
         mesh.material = unlocked ? unlockedMaterial : defaultMaterial;
+    }
+
+    void LoadGem()
+    {
+        if (PlayerPrefs.HasKey(GemColour.ToString() + "_unlocked"))
+        {
+            Unlock();
+        }
     }
 }

@@ -165,8 +165,9 @@ namespace Platformer
             AddTransition(jumpState, landState, new FuncPredicate(() => isGrounded && !dashTimer.IsRunning && !jumpTimer.IsRunning));
 
             AddTransition(landState, locomotionState, new FuncPredicate(() => isGrounded && !landStateTimer.IsRunning));
-            AddTransition(landState, fallState, new FuncPredicate(() => !isGrounded));
+            AddTransition(landState, fallState, new FuncPredicate(() => ShouldFall));
             AddTransition(landState, jumpState, new FuncPredicate(() => jumpTimer.IsRunning || jumpBufferTimer.IsRunning));
+            AddTransition(landState, dashState, new FuncPredicate(() => isGrounded && dashTimer.IsRunning));
 
             AddTransition(bounceState, fallState, new FuncPredicate(() => !bounceTimer.IsRunning));
             AddTransition(bounceState, landState, new FuncPredicate(() => isGrounded && !bounceTimer.IsRunning));

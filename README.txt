@@ -1,17 +1,18 @@
-Code for 3D Platformer with fluid movement made in Unity following SOLID principles using C#, Probuilder and State Machines.
+Customizable Engine for a 3D Platformer with fluid movement made in Unity following SOLID principles using C#, Probuilder and State Machines.
 
 Features
 -Highly customizable with everything from jump height to attack hitboxes editable in inspector
--Full movement system including slope movement, jumping, longjumping, dashing, wall jumping (TODO), jump buffers, coyote time and more
+-Full movement system including slope movement, jumping, longjumping, dashing, wall jumping, jump buffers, coyote time and more
 -Easy to use custom Event System that supports enums and passing parameters to all subscribers 
 -Gizmos for visualizing Spherecasts, OverlapSpheres etc
 -Optimized to run smoothly in browser
 
 Software Used: BFXR, Unity, Visual Studio
 
-NOTE: This repository is only meant to show code and not compile, as such packages, music, and materials have not been included to save space.
+NOTE: This repository is mainly to share the code, and as such will not compile without first installing the Unity Packages below.
 
-PACKAGES REQUIRED (All packages are free): Cartoon Remaster VFX (Free ver)
+PACKAGES REQUIRED (All packages are free): 
+	  Cartoon Remaster VFX (Free ver)
 	  DOTween (Free ver)	  
 	  Probuilder
 	  Text Mesh Pro
